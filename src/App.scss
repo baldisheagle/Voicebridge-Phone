@@ -1,0 +1,147 @@
+/*
+  App
+*/
+
+html {
+    overflow: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-11) transparent;
+}
+
+::-webkit-scrollbar {
+    overflow: visible;
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--gray-11);
+    height: 30px;
+}
+
+a:hover {
+    color: var(--accent-9);
+}
+
+/*
+  Radix Themes
+*/
+
+.radix-themes {
+    --default-font-family: 'Inter Regular';
+    --heading-font-family: 'Inter Bold';
+}
+
+*:focus {
+    outline: none !important;
+}
+
+/*
+    Textarea
+*/
+
+// textarea {
+//     resize:none!important;
+//     outline: none!important;
+//     -webkit-box-shadow: none!important;
+//     -moz-box-shadow: none!important;
+//     box-shadow: none!important;
+// }
+
+/*
+  Toaster
+*/
+
+.toast {
+    font-family: 'Inter Regular', sans-serif;
+    font-size: 0.85em;
+}
+
+/*
+  AG Grid
+*/
+
+.ag-theme-alpine-light {
+    // --ag-font-size: 0.75rem;
+    --ag-borders: none;
+    --ag-row-border-color: #DDDDDD;
+    --ag-background-color: #F9F9F9;
+    --ag-icon-font-family: 'agGridAlpine';
+  }
+  
+  .ag-theme-alpine-light .ag-header {
+    font-family: 'Inter Medium';
+    font-size: 0.8rem;
+    // text-transform: capitalize;
+    background-color: transparent;
+  }
+  
+  .ag-theme-alpine-light .ag-cell-value {
+    line-height: 26px !important;
+    word-break: normal;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  
+  .ag-row-odd {
+    background-color: transparent;
+  }
+  
+  .ag-row:hover {
+    background-color: #EEEEEE;
+  }
+
+/*
+  Accordion
+*/
+
+.AccordionRoot {
+    border-radius: var(--radius-3);
+    background: var(--gray-2);
+}
+
+.AccordionItem {
+    overflow: hidden;
+    margin-top: 1px;
+}
+
+.AccordionItem:first-child {
+    margin-top: 0;
+    border-top-left-radius: var(--radius-3);
+    border-top-right-radius: var(--radius-3);
+}
+
+.AccordionItem:last-child {
+    border-bottom-left-radius: var(--radius-3);
+    border-bottom-right-radius: var(--radius-3);
+}
+
+.AccordionTrigger {
+    font-family: inherit;
+    background-color: transparent;
+    padding: 12px 15px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: none;
+    cursor: pointer;
+}
+
+.AccordionTrigger:hover {
+    background-color: var(--gray-3);
+}
+
+.AccordionContent {
+    overflow: hidden;
+    padding: 0 15px;
+    background-color: var(--gray-1);
+}
+
+.AccordionTrigger[data-state='open'] {
+    background-color: var(--gray-3);
+}
+
