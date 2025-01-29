@@ -7,10 +7,7 @@ import { ThemeContext } from "./Theme.js";
 import { Heading, Separator, Spinner, TabNav, Text } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessProfile from './components/agent/BusinessProfile.js';
-import CallSettings from './components/agent/CallSettings.js';
-import Skills from './components/agent/Skills.js';
 import FAQ from './components/agent/FAQ.js';
-import Questions from './components/agent/Questions.js';
 export default function Agent() {
 
   const auth = useRequireAuth();
@@ -19,7 +16,7 @@ export default function Agent() {
   const { theme } = useContext(ThemeContext);
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
-  const [activeTab, setActiveTab] = useState('callSettings');
+  const [activeTab, setActiveTab] = useState('businessProfile');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,35 +44,27 @@ export default function Agent() {
   return (
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
 
-      <Heading size='4'>Agent Settings</Heading>
-
+      <Heading size='4'>Business Settings</Heading>
+      
       <div style={{ width: '100%', marginTop: 10 }}>
-          <TabNav.Root>
-            <TabNav.Link href="#" active={activeTab === 'callSettings'} onClick={() => setActiveTab('callSettings')}>
-              Call Settings
-            </TabNav.Link>
-            <TabNav.Link href="#" active={activeTab === 'questions'} onClick={() => setActiveTab('questions')}>
-              Questions
-            </TabNav.Link>
-            <TabNav.Link href="#" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')}>
-              Skills
-            </TabNav.Link>
-          </TabNav.Root>
-        </div>
-
+        <TabNav.Root>
+          <TabNav.Link href="#" active={activeTab === 'businessProfile'} onClick={() => setActiveTab('businessProfile')}>
+            Business Profile
+          </TabNav.Link>
+          <TabNav.Link href="#" active={activeTab === 'faq'} onClick={() => setActiveTab('faq')}>
+            FAQ
+          </TabNav.Link>
+        </TabNav.Root>
+      </div>
 
       <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
 
-        {activeTab === 'callSettings' && (    
-          <CallSettings />
+        {activeTab === 'businessProfile' && ( 
+          <BusinessProfile />
         )}
 
-        {activeTab === 'questions' && (
-          <Questions />
-        )}
-
-        {activeTab === 'skills' && (
-          <Skills />
+        {activeTab === 'faq' && (
+          <FAQ />
         )}
 
       </div>
@@ -88,3 +77,27 @@ export default function Agent() {
 
 }
 
+        // {/* Business Profile */}
+        // {activeTab === 'businessProfile' && (
+        //   <BusinessProfile />
+        // )}
+
+        // {/* FAQ */}
+        // {activeTab === 'faq' && (
+        //   <FAQ />
+        // )}
+
+        // {/* Call Settings */}
+        // {activeTab === 'callSettings' && (
+        //   <CallSettings />
+        // )}
+
+        // {/* Skills */}
+        // {activeTab === 'skills' && (
+        //   <Skills />
+        // )}
+
+        // {/* Questions */}
+        // {activeTab === 'questions' && (
+        //   <Questions />
+        // )}

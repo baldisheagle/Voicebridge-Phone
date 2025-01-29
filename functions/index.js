@@ -54,7 +54,7 @@ const corsMiddleware = cors(corsOptions);
 
 exports.retellCallWebhook = onRequest((req, res) => {
   console.log('Retell call webhook', req.body);
-  res.status(200).send('Webhook received');
+  
   // TODO: Add signature verification
   // if (
   //   !Retell.verify(
@@ -67,35 +67,86 @@ exports.retellCallWebhook = onRequest((req, res) => {
   //   res.status(401).send('Invalid signature');
   //   return;
   // }
+
   const {event, call} = req.body;
   switch (event) {
     case "call_started":
-      console.log("Call started event received", call.call_id);
       break;
     case "call_ended":
-      console.log("Call ended event received", call.call_id);
-      // Save the call to the database
-      // call.data.call_id
-      // call.agent_id
-      // call.call_status
-      // call.start_timestamp
-      // call.end_timestamp
-      // call.duration_ms
-      // call.transcript or call.transcript_object
-      // call.recording_url
-      // call.disconnect_reason
-      // call.data.from_number
-      // call.data.to_number
       break;
     case "call_analyzed":
       console.log("Call analyzed event received", call.call_id);
+      saveCallToDatabase(call).then(() => {
+        console.log('Call saved to database', call.call_id);
+      }).catch((error) => {
+        console.error('Error saving call to database', error);
+      });
       break;
     default:
       console.log("Received an unknown event:", event);
   }
-  // Acknowledge the receipt of the event
+  
+  // Send response only once at the end
   res.status(204).send();
 });
+
+/*
+  Function: Save call to database
+  Parameters:
+    call
+  Return:
+    null
+*/
+
+async function saveCallToDatabase(call) {
+
+  console.log('Saving call to database', call);
+
+  // Get workspaceId from based on call.agent_id
+  if (!call.agent_id) {
+    console.error('No agent_id found for call', call.call_id);
+    return;
+  }
+  
+  console.log('Agent ID found for call', call.agent_id);
+
+  const workspaces = await db.collection('workspaces').where('retellAgentId', '==', call.agent_id).limit(1).get();
+  
+  if (workspaces.docs.length === 0) {
+    console.error('No workspace found for agent', call.agent_id);
+    return;
+  }
+  const workspaceId = workspaces.docs[0].id;
+  
+  console.log('Workspace found for agent', call.agent_id, workspaceId);
+
+  // Save call to database
+  const callId = uuidv4();
+  await db.collection('calls').doc(callId).set({
+    id: callId,
+    workspaceId: workspaceId,
+    agentId: call.agent_id,
+    callId: call.call_id,
+    cost: call.call_cost || null,
+    callSummary: call.call_analysis && call.call_analysis.call_summary ? call.call_analysis.call_summary : null,
+    userSentiment: call.call_analysis && call.call_analysis.user_sentiment ? call.call_analysis.user_sentiment : null,
+    callerName: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.caller_name ? call.call_analysis.custom_analysis_data.caller_name : 'Anonymous',
+    callPurpose: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.purpose_of_call ? call.call_analysis.custom_analysis_data.purpose_of_call : 'Unknown',
+    fromNumber: call.from_number ? call.from_number : null,
+    toNumber: call.to_number ? call.to_number : null,
+    direction: call.direction || null,
+    callStatus: call.call_status || null,
+    startTimestamp: call.start_timestamp || null,
+    endTimestamp: call.end_timestamp || null,
+    durationMs: call.duration_ms || null,
+    transcript: call.transcript || null,
+    recordingUrl: call.recording_url || null,
+    disconnectReason: call.disconnect_reason || null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  return;
+}
 
 /*
   Function: Get access token from Epic
@@ -485,31 +536,6 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     return [];
   }
 }
-
-
-/*
-  Function: Example
-  Parameters:
-    user_id
-  Return:
-    null
-*/
-
-// async function example(user_id) {
-
-//   const { data, error } = await supabaseClient
-//     .from('usage')
-//     .insert([{
-//       created_by: user_id,
-//     }])
-
-//   if (error) {
-//     return false;
-//   } else {
-//     return true;
-//   }
-
-// }
 
 /*
   Function: Stripe API: Create customer

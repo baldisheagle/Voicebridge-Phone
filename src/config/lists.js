@@ -37,6 +37,20 @@ export const REVIEW_PLATFORMS = [
   { value: 'Zocdoc', label: 'Zocdoc' },
 ];
 
+export const CALL_PURPOSES = [
+  { value: 'book_appointment', label: 'Book Appointment' },
+  { value: 'cancel_appointment', label: 'Cancel Appointment' },
+  { value: 'reschedule_appointment', label: 'Reschedule Appointment' },
+  { value: 'billing_question', label: 'Billing Question' },
+  { value: 'insurance_question', label: 'Insurance Question' },
+  { value: 'lab_results_question', label: 'Lab Results Question' },
+  { value: 'prescription_refill_request', label: 'Prescription Refill Request' },
+  { value: 'clinic_hours_location_question', label: 'Clinic Question' },
+  { value: 'seek_advice', label: 'Seek Advice' },
+  { value: 'request_medical_records', label: 'Request Medical Records' },
+  { value: 'unknown', label: 'Unknown' },
+];
+
 export const TIMEZONE_OFFSETS = [
   { value: -10, label: 'Honolulu, Hawaii (HST) -10:00', timezone: 'Pacific/Honolulu' },
   { value: -9, label: 'Anchorage, Alaska (AKST) -9:00', timezone: 'America/Anchorage' },

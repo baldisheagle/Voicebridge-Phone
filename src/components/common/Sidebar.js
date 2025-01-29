@@ -4,7 +4,7 @@ import { Col } from 'react-bootstrap';
 import Logo from "./Logo.js";
 import { useMediaQuery } from "../../helpers/dom.js";
 import { Sidebar, Menu, MenuItem, menuClasses } from 'react-pro-sidebar';
-import { Gear, UserCircle, Phone, HouseSimple  } from "@phosphor-icons/react";
+import { Gear, UserCircle, Phone, HouseSimple, Building, Code  } from "@phosphor-icons/react";
 
 export default function SidebarComponent(props) {
 
@@ -101,7 +101,7 @@ export default function SidebarComponent(props) {
               }}
               >
 
-              {/* <MenuItem 
+              <MenuItem 
                 label="Dashboard"
                 active={location.pathname === '/dashboard' ? true : false} 
                 icon={<HouseSimple size={15} weight="bold" />}
@@ -111,7 +111,7 @@ export default function SidebarComponent(props) {
                   },
                 }}
                 onClick={() => navigate("/dashboard")}>Dashboard
-              </MenuItem> */}
+              </MenuItem>
 
               <MenuItem 
                 label="Calls"
@@ -136,6 +136,30 @@ export default function SidebarComponent(props) {
                 }}
                 onClick={() => navigate("/agent")}>Agent
               </MenuItem>
+
+              <MenuItem 
+                label="Business"
+                active={location.pathname === '/business' ? true : false} 
+                icon={<Building size={15} weight="bold" />}
+                rootStyles={{
+                  ['.' + menuClasses.button]: {
+                    marginBottom: '0px',
+                  },
+                }}
+                onClick={() => navigate("/business")}>Business
+              </MenuItem>
+
+              {/* <MenuItem 
+                label="Integrations"
+                active={location.pathname === '/integrations' ? true : false} 
+                icon={<Code size={15} weight="bold" />}
+                rootStyles={{
+                  ['.' + menuClasses.button]: {
+                    marginBottom: '0px',
+                  },
+                }}
+                onClick={() => navigate("/integrations")}>Integrations
+              </MenuItem> */}
 
               <MenuItem 
                 label="Settings"

@@ -179,7 +179,7 @@ export default function CallSettings() {
       </Row>
 
       {/* Blocked numbers */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      {/* <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Blocked numbers</Text>
           <Text size="1" as='div' color='gray'>Enter a comma-separated list of numbers to block.</Text>
@@ -187,7 +187,7 @@ export default function CallSettings() {
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <TextField.Root variant="surface" placeholder="123-456-7890" value={blockedNumbers} onChange={(e) => setBlockedNumbers(e.target.value)} />
         </Col>
-      </Row>
+      </Row> */}
 
       {/* Email notifications */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>

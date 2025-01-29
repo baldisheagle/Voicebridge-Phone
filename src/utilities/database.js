@@ -82,4 +82,19 @@ export const dbUpdateAgent = async(_agent) => {
   }
 }
 
+// Delete call
+export const dbDeleteCall = async(workspaceId, callId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "calls"), where("workspaceId", "==", workspaceId), where("id", "==", callId)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting call:", error);
+    return false;
+  }
+}
 
