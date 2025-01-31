@@ -3,19 +3,19 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
 import { Select, Spinner, Text, TextField, Button, Switch } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { LANGUAGES, VOICES, DEFAULT_AGENT_NAME, DEFAULT_VOICE_ID, DEFAULT_INCLUDE_DISCLAIMER, DEFAULT_LANGUAGE } from '../../config/retellagents.js';
+import { LANGUAGES, VOICES } from '../../config/retellagents.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
-import { dbUpdateAgent, dbGetAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
+import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
 
 export default function CallSettings({ agent }) {
 
   const auth = useRequireAuth();
 
-  const [language, setLanguage] = useState(agent.language || DEFAULT_LANGUAGE);
-  const [agentName, setAgentName] = useState(agent.agentName || DEFAULT_AGENT_NAME);
-  const [voiceId, setVoiceId] = useState(agent.voiceId || DEFAULT_VOICE_ID);
-  const [includeDisclaimer, setIncludeDisclaimer] = useState(agent.includeDisclaimer || DEFAULT_INCLUDE_DISCLAIMER);
-  const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber || null);
+  const [language, setLanguage] = useState(agent.language);
+  const [agentName, setAgentName] = useState(agent.agentName);
+  const [voiceId, setVoiceId] = useState(agent.voiceId);
+  const [includeDisclaimer, setIncludeDisclaimer] = useState(agent.includeDisclaimer);
+  const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +101,7 @@ export default function CallSettings({ agent }) {
       {/* Agent's name */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Agent's name</Text>
+          <Text size="2" weight="bold">Name</Text>
           <Text size="1" as='div' color='gray'>The name of your agent.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
@@ -112,7 +112,7 @@ export default function CallSettings({ agent }) {
       {/* Agent's voice */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Agent's voice</Text>
+          <Text size="2" weight="bold">Voice</Text>
           <Text size="1" as='div' color='gray'>The voice of your agent.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
@@ -131,7 +131,7 @@ export default function CallSettings({ agent }) {
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Language</Text>
-          <Text size="1" as='div' color='gray'>The language of your business.</Text>
+          <Text size="1" as='div' color='gray'>The language of your agent.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Select.Root value={language} onValueChange={(value) => setLanguage(value)}>

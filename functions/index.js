@@ -33,8 +33,8 @@ const allowedOrigins = ['https://voicebridge-app.web.app', 'https://app.voicebri
 
 // Import constants
 const { 
-  RETELL_TEMPLATE_BASIC_INBOUND_LLM, 
-  RETELL_TEMPLATE_BASIC_INBOUND_AGENT
+  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM, 
+  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT
 } = require('./templates');
 
 // Cors options
@@ -167,7 +167,7 @@ exports.createRetellAgent = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
     if (req && req.headers) {
-      if (req.body && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer) {
+      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer) {
         
         console.log('Creating Retell Agent', req.body);
 
@@ -176,19 +176,19 @@ exports.createRetellAgent = onRequest((req, res) => {
           apiKey: process.env.REACT_APP_RETELL_API_KEY,
         });
 
-        // Create LLM
-        let llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_LLM));
+        // Create LLM - TODO: Add more templates
+        let llm = req.body.template === 'basic-phone-receptionist' ? JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM)) : JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
 
         // Replace variables in model
         llm.model = req.body.model;
         
         // Replace variables in begin_message
         llm.begin_message = llm.begin_message.replaceAll('[[AGENT_NAME]]', req.body.agentName);
-        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessInfo.name);
         llm.begin_message = llm.begin_message.replaceAll('[[INCLUDE_DISCLAIMER]]', req.body.includeDisclaimer ? 'If this is an emergency, please hang up and dial Nine-One-One.' : '');
         // Replace variables in general_prompt
         llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
-        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessInfo.name);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
 
         console.log('LLM', llm);
@@ -205,7 +205,8 @@ exports.createRetellAgent = onRequest((req, res) => {
         }
 
         // Create Agent
-        let agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_AGENT));
+        let agent = req.body.template === 'basic-phone-receptionist' ? JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT)) : JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_AGENT));
+
         agent.response_engine.llm_id = retellLlm.llm_id;
         agent.agent_name = req.body.agentName;
         agent.voice_id = req.body.voiceId;
@@ -257,6 +258,51 @@ exports.createRetellAgent = onRequest((req, res) => {
   
 });
 
+/*
+  Function: Create Retell Agent
+  Parameters:
+    agentName
+  Return:
+    null
+*/
+
+exports.deleteRetellAgent = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+      if (req.body && req.body.retellLlmId && req.body.retellAgentId) {
+        console.log('Deleting Retell Agent', req.body);
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Delete LLM
+        await client.llm.delete(req.body.retellLlmId);
+
+        // Delete Agent
+        await client.agent.delete(req.body.retellAgentId);
+
+        console.log('Retell Agent deleted', req.body.retellAgentId);
+        res.status(200).send(JSON.stringify({ message: "Retell Agent deleted" }));
+        return;
+
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+
+  });
+
+});
 
 /*
   Function: Get access token from Epic

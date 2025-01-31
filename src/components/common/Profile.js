@@ -4,6 +4,7 @@ import { useRequireAuth } from "../../use-require-auth.js";
 import { Avatar, DropdownMenu, IconButton } from "@radix-ui/themes";
 import { ThemeContext } from "../../Theme";
 import { ExitIcon, MoonIcon, SunIcon } from "@radix-ui/react-icons";
+import { User } from "@phosphor-icons/react";
 
 export default function Profile() {
 
@@ -54,6 +55,9 @@ export default function Profile() {
           </IconButton>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content direction="bottom">
+          <DropdownMenu.Item style={{ cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+            <div style={{ display: 'flex', alignItems: 'center' }}><User style={{ marginRight: 10 }} /> Profile</div>
+          </DropdownMenu.Item>
           <DropdownMenu.Item style={{ cursor: 'pointer' }} onClick={() => toggleTheme()}>
             { theme === 'light-theme' ? 
               <div style={{ display: 'flex', alignItems: 'center' }}><MoonIcon style={{ marginRight: 10 }} /> Dark Mode</div> :

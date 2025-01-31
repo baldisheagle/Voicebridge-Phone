@@ -1,0 +1,24 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="100" fill="url(#gradient-fill)"/>
+    <defs>
+        <linearGradient id="gradient-fill" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+            
+                <stop offset="0" stop-color="#003f5b" />
+            
+                <stop offset="0.14285714285714285" stop-color="#2b4b7d" />
+            
+                <stop offset="0.2857142857142857" stop-color="#5f5195" />
+            
+                <stop offset="0.42857142857142855" stop-color="#98509d" />
+            
+                <stop offset="0.5714285714285714" stop-color="#cc4c91" />
+            
+                <stop offset="0.7142857142857143" stop-color="#f25375" />
+            
+                <stop offset="0.8571428571428571" stop-color="#ff6f4e" />
+            
+                <stop offset="1" stop-color="#ff9913" />
+            
+        </linearGradient>
+    </defs>
+</svg>

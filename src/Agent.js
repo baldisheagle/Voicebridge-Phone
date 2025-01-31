@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRequireAuth } from './use-require-auth.js';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Image } from 'react-bootstrap';
 import { Button, Heading, Spinner, TabNav, TextField } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/agent/BusinessInfo.js';
 import Settings from './components/agent/Settings.js';
 import { dbGetAgent, dbUpdateAgent } from './utilities/database.js';
-import { ArrowLeft, Pencil } from '@phosphor-icons/react';
+import { ArrowLeft, Pencil, UserCircleCheck } from '@phosphor-icons/react';
 
 export default function Agent() {
 
@@ -71,11 +71,18 @@ export default function Agent() {
 
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 5 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={4} style={{ padding: 0 }}>
+          <div style={{ marginTop: 10 }}>
+            { agent.icon ? (
+              <Image src={agent.icon} alt="Agent icon" style={{ width: 36, height: 36 }} roundedCircle />
+            ) : (
+              <UserCircleCheck size={36} color='gray' />
+            )}
+          </div>
           {editingName ? (
             <TextField.Root 
               variant="surface" 
-              placeholder="John Doe" 
-              style={{ marginTop: 5, marginBottom: 5 }}
+              placeholder="Jane Doe" 
+              style={{ marginTop: 10, marginBottom: 20 }}
               value={editedName} 
               onChange={(e) => e.target.value.length > 0 ? setEditedName(e.target.value) : setEditedName('Untitled')}
               onKeyDown={(e) => {
@@ -88,7 +95,7 @@ export default function Agent() {
             <Heading
               size='5'
               as="div"
-              style={{ marginTop: 5, cursor: 'pointer' }}
+              style={{ marginTop: 10, marginBottom: 10, cursor: 'pointer' }}
               onClick={() => {
                 setEditingName(true);
                 setEditedName(agent.name);
@@ -126,7 +133,7 @@ export default function Agent() {
         </div>
 
 
-      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 300, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
 
         {activeTab === 'settings' && (    
           <Settings agent={agent} />

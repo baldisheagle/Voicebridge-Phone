@@ -1,15 +1,37 @@
 // Retell Templates
 
-export const DEFAULT_AGENT_NAME = "Sally";
-export const DEFAULT_INCLUDE_DISCLAIMER = true;
-export const DEFAULT_VOICE_ID = "11labs-Myra";
-export const DEFAULT_LANGUAGE = "en-US";
-export const DEFAULT_MODEL = "gpt-4o";
-export const DEFAULT_BUSINESS_NAME = "Clinic";
-export const DEFAULT_TIMEZONE = "-8";
+// Defaults for Basic Phone Receptionist
+export const BASIC_PHONE_RECEPTIONIST_TEMPLATE = {
+    id: "basic-phone-receptionist",
+    name: "Sally",
+    description: "Create a basic new phone receptionist that answers calls, responds to routine questions, and summarizes caller's intent for proper and timely follow up.",
+    includeDisclaimer: true,
+    voiceId: "11labs-Myra",
+    language: "en-US",
+    model: "gpt-4o",
+    icon: '/assets/agents/basic-phone-receptionist.svg',
+    businessInfo: {
+        name: "Clinic",
+        timezone: "-8",
+        businessHours: {
+            monday: { id: 'monday', value: 'monday', label: 'Monday', isOpen: true, open: '09:00', close: '17:00' },
+            tuesday: { id: 'tuesday', value: 'tuesday', label: 'Tuesday', isOpen: true, open: '09:00', close: '17:00' },
+            wednesday: { id: 'wednesday', value: 'wednesday', label: 'Wednesday', isOpen: true, open: '09:00', close: '17:00' },
+            thursday: { id: 'thursday', value: 'thursday', label: 'Thursday', isOpen: true, open: '09:00', close: '17:00' },
+            friday: { id: 'friday', value: 'friday', label: 'Friday', isOpen: true, open: '09:00', close: '17:00' },
+            saturday: { id: 'saturday', value: 'saturday', label: 'Saturday', isOpen: false, open: '09:00', close: '17:00' },
+            sunday: { id: 'sunday', value: 'sunday', label: 'Sunday', isOpen: false, open: '09:00', close: '17:00' },
+        },
+        description: "",
+        website: "",
+        location: "",
+        phoneNumber: "",
+    },
+};
 
 export const VOICES = [
     { value: "11labs-Myra", label: "US Female" },
+    { value: "11labs-Adrian", label: "US Male" },
 ];
 
 export const LANGUAGES = [
@@ -20,16 +42,6 @@ export const MODELS = [
     { value: "gpt-4o", label: "GPT-4o" },
     { value: "gpt-4o-mini", label: "GPT-4o Mini" },
 ];
-
-export const BUSINESS_HOURS = {
-    monday: { id: 'monday', value: 'monday', label: 'Monday', isOpen: true, open: '09:00', close: '17:00' },
-    tuesday: { id: 'tuesday', value: 'tuesday', label: 'Tuesday', isOpen: true, open: '09:00', close: '17:00' },
-    wednesday: { id: 'wednesday', value: 'wednesday', label: 'Wednesday', isOpen: true, open: '09:00', close: '17:00' },
-    thursday: { id: 'thursday', value: 'thursday', label: 'Thursday', isOpen: true, open: '09:00', close: '17:00' },
-    friday: { id: 'friday', value: 'friday', label: 'Friday', isOpen: true, open: '09:00', close: '17:00' },
-    saturday: { id: 'saturday', value: 'saturday', label: 'Saturday', isOpen: false, open: '09:00', close: '17:00' },
-    sunday: { id: 'sunday', value: 'sunday', label: 'Sunday', isOpen: false, open: '09:00', close: '17:00' },
-};
 
 export const REVIEW_PLATFORMS = [
     { value: 'Google', label: 'Google Business' },

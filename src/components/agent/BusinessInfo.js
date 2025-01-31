@@ -6,7 +6,7 @@ import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "../../Theme.js";
 import { Button, Spinner, Text, TextField, TextArea, Select, Switch, Badge } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { TIMEZONE_OFFSETS, HOURS, BUSINESS_HOURS, DEFAULT_TIMEZONE } from '../../config/retellagents.js';
+import { TIMEZONE_OFFSETS, HOURS } from '../../config/retellagents.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
 
 export default function BusinessInfo({ agent }) { 
@@ -22,8 +22,8 @@ export default function BusinessInfo({ agent }) {
   const [website, setWebsite] = useState(agent.businessInfo.website || '');
   const [location, setLocation] = useState(agent.businessInfo.location || '');
   const [phoneNumber, setPhoneNumber] = useState(agent.businessInfo.phoneNumber || '');
-  const [timezone, setTimezone] = useState(agent.businessInfo.timezone || DEFAULT_TIMEZONE);
-  const [businessHours, setBusinessHours] = useState(agent.businessInfo.businessHours || BUSINESS_HOURS);
+  const [timezone, setTimezone] = useState(agent.businessInfo.timezone);
+  const [businessHours, setBusinessHours] = useState(agent.businessInfo.businessHours);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

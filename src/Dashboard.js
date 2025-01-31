@@ -94,6 +94,24 @@ export default function Dashboard() {
 
       <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
 
+        {/* TODO: Onboarding steps */}
+        {(numPhoneNumbers === 0 || numAgents === 0) && (
+            <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
+            <Col xs={12} sm={12} md={12} lg={12} style={{ padding: 10 }}>
+              <Heading size='3' style={{ color: 'var(--gray-11)' }}>Checklist</Heading>
+              {/* Check if the workspace has at least one phone number */}
+              {numPhoneNumbers === 0 && (
+                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/integrations')}>Connect a phone number</Link></Text>
+              )}
+              {/* TODO: Check if the workspace has at least one agent */}
+              {numAgents === 0 && (
+                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/agents')}>Create an agent</Link></Text>
+              )}
+              
+            </Col>
+          </Row>
+        )}
+
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0 }}>
           <Col xs={6} sm={6} md={4} lg={4} xl={3} style={{ padding: 10 }}>
             <Card>
@@ -116,23 +134,7 @@ export default function Dashboard() {
           </Col>
         </Row>
 
-        {/* TODO: Onboarding steps */}
-        {(numPhoneNumbers === 0 || numAgents === 0) && (
-            <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
-            <Col xs={12} sm={12} md={12} lg={12} style={{ padding: 10 }}>
-              <Heading size='3' style={{ color: 'var(--gray-11)' }}>Checklist</Heading>
-              {/* Check if the workspace has at least one phone number */}
-              {numPhoneNumbers === 0 && (
-                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/integrations')}>Connect a phone number</Link></Text>
-              )}
-              {/* TODO: Check if the workspace has at least one agent */}
-              {numAgents === 0 && (
-                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/agents')}>Create an agent</Link></Text>
-              )}
-              
-            </Col>
-          </Row>
-        )}
+        {/* TODO: Charts: number, time of day, purpose, sentiment */}
 
         {/* Recent calls */}
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>

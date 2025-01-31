@@ -13,11 +13,11 @@ export default function Logo(props) {
 
   if (type === 'icon') {
     return (
-      <Image src="/logo.png" style={{ width: width + 'px' }} />
+      <Image src="/icon.svg" style={{ width: width + 'px' }} />
     )
   } else {
     return (
-      <Image src={theme === "dark-theme" ? "/logo.svg" : "/logo-light.svg"} style={{ width: width + 'px' }} />
+      <Image src={theme === "dark-theme" ? "/logo-light.svg" : "/logo.svg"} style={{ width: width + 'px' }} />
     )
   }
 }

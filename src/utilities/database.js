@@ -13,6 +13,18 @@ export const dbUpdateWorkspace = async(workspaceId, _workspace) => {
   }
 }
 
+// Update user
+export const dbUpdateUser = async(_user) => {
+  try {
+    const docRef = doc(db, "users", _user.uid);
+    await setDoc(docRef, _user);
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return false;
+  }
+}
+
 // Get phone numbers
 export const dbGetPhoneNumbers = async(workspaceId) => {
   try {
@@ -136,6 +148,22 @@ export const dbUpdateAgent = async(_agent) => {
   
   } catch (error) {
     console.error("Error updating agent:", error);
+    return false;
+  }
+}
+
+// Delete agent
+export const dbDeleteAgent = async(workspaceId, agentId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "agents"), where("workspaceId", "==", workspaceId), where("id", "==", agentId)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting agent:", error);
     return false;
   }
 }

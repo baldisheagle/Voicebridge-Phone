@@ -13,7 +13,6 @@ import { ThemeContext } from "./Theme.js";
 import { Container, Row, Col } from 'react-bootstrap';
 import { ProvideAuth } from "./use-firebase.js";
 import Login from "./Login.js";
-
 import NotFound from "./NotFound.js";
 import Dashboard from "./Dashboard.js";
 import Settings from './Settings.js';
@@ -22,6 +21,7 @@ import Agents from './Agents.js';
 import Agent from './Agent.js';
 import Business from './Business.js';
 import Integrations from './Integrations.js';
+import UserProfile from './Profile.js';
 import Profile from './components/common/Profile.js';
 import SidebarComponent from './components/common/Sidebar.js';
 
@@ -49,6 +49,7 @@ export default function App() {
                   <Route path="/agent/:agentId" element={<Agent />} />
                   <Route path="/business" element={<Business />} />
                   <Route path="/integrations" element={<Integrations />} />
+                  <Route path="/profile" element={<UserProfile />} />
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
                   {/* Catch all */}
