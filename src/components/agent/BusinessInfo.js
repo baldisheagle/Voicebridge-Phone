@@ -6,10 +6,10 @@ import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "../../Theme.js";
 import { Button, Spinner, Text, TextField, TextArea, Select, Switch, Badge } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { TIMEZONE_OFFSETS, HOURS, BUSINESS_HOURS } from '../../config/lists.js';
-import { dbUpdateAgent, dbGetAgent } from '../../utilities/database.js';
+import { TIMEZONE_OFFSETS, HOURS, BUSINESS_HOURS, DEFAULT_TIMEZONE } from '../../config/retellagents.js';
+import { dbUpdateAgent } from '../../utilities/database.js';
 
-export default function BusinessProfile() {
+export default function BusinessInfo({ agent }) { 
 
   const auth = useRequireAuth();
 
@@ -17,15 +17,14 @@ export default function BusinessProfile() {
   const { theme } = useContext(ThemeContext);
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
-  const [agent, setAgent] = useState(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [website, setWebsite] = useState('');
-  const [location, setLocation] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [timezone, setTimezone] = useState('');
-  const [businessHours, setBusinessHours] = useState(BUSINESS_HOURS);
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(agent.businessInfo.name || '');
+  const [description, setDescription] = useState(agent.businessInfo.description || '');
+  const [website, setWebsite] = useState(agent.businessInfo.website || '');
+  const [location, setLocation] = useState(agent.businessInfo.location || '');
+  const [phoneNumber, setPhoneNumber] = useState(agent.businessInfo.phoneNumber || '');
+  const [timezone, setTimezone] = useState(agent.businessInfo.timezone || DEFAULT_TIMEZONE);
+  const [businessHours, setBusinessHours] = useState(agent.businessInfo.businessHours || BUSINESS_HOURS);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
@@ -35,31 +34,22 @@ export default function BusinessProfile() {
 
   // Initialize
   const initialize = async () => {
-    setLoading(true);
-    dbGetAgent(auth.workspace.id).then((agent) => {
-      setAgent(agent);
-      setName(agent.name || '');
-      setDescription(agent.description || '');
-      setWebsite(agent.website || '');
-      setLocation(agent.location || '');
-      setPhoneNumber(agent.phoneNumber || '');
-      setTimezone(agent.timezone || -8);
-      setBusinessHours(agent.businessHours || BUSINESS_HOURS);
-    });
     setLoading(false);
   }
 
   // Save business profile
-  const saveBusinessProfile = async () => {
+  const saveBusinessInfo = async () => {
     let _agent = {
       ...agent,
-      name: name,
-      description: description,
-      website: website,
-      location: location,
-      phoneNumber: phoneNumber,
-      timezone: timezone,
-      businessHours: businessHours,
+      businessInfo: {
+        name: name,
+        description: description,
+        website: website,
+        location: location,
+        phoneNumber: phoneNumber,
+        timezone: timezone,
+        businessHours: businessHours,
+      }
     }
 
     let res = await dbUpdateAgent(_agent);
@@ -87,7 +77,7 @@ export default function BusinessProfile() {
       {/* Name */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Name</Text>
+          <Text size="2" weight="bold">Business name</Text>
           <Text size="1" as='div' color='gray'>The name of your business.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
@@ -98,7 +88,7 @@ export default function BusinessProfile() {
       {/* Description */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">About</Text>
+          <Text size="2" weight="bold">Description</Text>
           <Text size="1" as='div' color='gray'>A short description of your business.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
@@ -167,6 +157,7 @@ export default function BusinessProfile() {
           {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
             <div key={day} style={{ marginBottom: 15 }}>
               <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 5 }}>
+                {/* <Switch.Root size="1" checked={businessHours[day].isOpen} onCheckedChange={(checked) => setBusinessHours({ ...businessHours, [day]: { ...businessHours[day], isOpen: checked } })} /> */}
                 <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-11)', marginRight: 10 }}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
                 <Badge size="1" weight="medium" as='div' style={{ cursor: 'pointer' }} color={businessHours[day].isOpen ? 'green' : 'gray'} onClick={() => setBusinessHours({ ...businessHours, [day]: { ...businessHours[day], isOpen: !businessHours[day].isOpen } })}>{businessHours[day].isOpen ? 'Open' : 'Closed'}</Badge>
               </Row>
@@ -201,7 +192,7 @@ export default function BusinessProfile() {
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Button variant="solid" onClick={saveBusinessProfile}>Save changes</Button>
+          <Button variant="solid" onClick={saveBusinessInfo}>Save changes</Button>
         </Col>
       </Row>
 

@@ -17,7 +17,7 @@ export default function Team() {
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [teamMembers, setTeamMembers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth && auth.user) {

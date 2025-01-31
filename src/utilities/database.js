@@ -13,21 +13,6 @@ export const dbUpdateWorkspace = async(workspaceId, _workspace) => {
   }
 }
 
-// Get calls
-export const dbGetCalls = async(workspaceId) => {
-  try {
-    const snapshot = await getDocs(query(collection(db, "calls"), where("workspaceId", "==", workspaceId)));
-    if (snapshot.empty) {
-      return [];
-    }
-    const _calls = snapshot.docs.map((doc) => doc.data());
-    return _calls;
-  } catch (error) {
-    console.error("Error fetching calls:", error);
-    return [];
-  }
-}
-
 // Get phone numbers
 export const dbGetPhoneNumbers = async(workspaceId) => {
   try {
@@ -43,10 +28,57 @@ export const dbGetPhoneNumbers = async(workspaceId) => {
   }
 }
 
-// Get agent
-export const dbGetAgent = async(workspaceId) => {
+// Update phone number
+export const dbUpdatePhoneNumber = async(_phoneNumber) => {
+  console.log(_phoneNumber);
   try {
-    const snapshot = await getDocs(query(collection(db, "agents"), where("workspaceId", "==", workspaceId)));
+    const snapshot = await getDocs(query(collection(db, "phonenumbers"), where("workspaceId", "==", _phoneNumber.workspaceId), where("id", "==", _phoneNumber.id), limit(1)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await setDoc(docRef, _phoneNumber);
+    return true;
+  } catch (error) {
+    console.error("Error updating phone number:", error);
+    return false;
+  }
+}
+
+// Get calendars
+export const dbGetCalendars = async(workspaceId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "calendars"), where("workspaceId", "==", workspaceId)));
+    if (snapshot.empty) {
+      return [];
+    }
+    const _calendars = snapshot.docs.map((doc) => doc.data());
+    return _calendars;
+  } catch (error) {
+    console.error("Error fetching calendars:", error);
+    return [];
+  }
+}
+
+// Get calls
+export const dbGetCalls = async(workspaceId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "calls"), where("workspaceId", "==", workspaceId)));
+    if (snapshot.empty) {
+      return [];
+    }
+    const _calls = snapshot.docs.map((doc) => doc.data());
+    return _calls;
+  } catch (error) {
+    console.error("Error fetching calls:", error);
+    return [];
+  }
+}
+
+// Get agent
+export const dbGetAgent = async(workspaceId, agentId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "agents"), where("workspaceId", "==", workspaceId), where("id", "==", agentId), limit(1)));
     if (snapshot.empty) {
       return null;
     }
@@ -55,6 +87,32 @@ export const dbGetAgent = async(workspaceId) => {
   } catch (error) {
     console.error("Error fetching agent:", error);
     return null;
+  }
+}
+
+// Create agent
+export const dbCreateAgent = async(_agent) => {
+  try {
+    const docRef = await addDoc(collection(db, "agents"), _agent);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating agent:", error);
+    return null;
+  }
+}
+
+// Get all agents 
+export const dbGetAgents = async(workspaceId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "agents"), where("workspaceId", "==", workspaceId)));
+    if (snapshot.empty) {
+      return [];
+    }
+    const _agents = snapshot.docs.map((doc) => doc.data());
+    return _agents;
+  } catch (error) {
+    console.error("Error fetching agents:", error);
+    return [];
   }
 }
 
@@ -94,6 +152,38 @@ export const dbDeleteCall = async(workspaceId, callId) => {
     return true;
   } catch (error) {
     console.error("Error deleting call:", error);
+    return false;
+  }
+}
+
+// Update calendar name
+export const dbUpdateCalendarName = async(calendarId, name, workspaceId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "calendars"), where("workspaceId", "==", workspaceId), where("id", "==", calendarId), limit(1)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await setDoc(docRef, { name: name });
+    return true;
+  } catch (error) {
+    console.error("Error updating calendar name:", error);
+    return false;
+  }
+}
+
+// Delete calendar
+export const dbDeleteCalendar = async(calendarId, workspaceId) => {
+  try {
+    const snapshot = await getDocs(query(collection(db, "calendars"), where("workspaceId", "==", workspaceId), where("id", "==", calendarId), limit(1)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting calendar:", error);
     return false;
   }
 }

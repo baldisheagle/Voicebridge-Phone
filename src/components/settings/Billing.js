@@ -18,7 +18,7 @@ export default function Billing() {
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [phoneNumbers, setPhoneNumbers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {

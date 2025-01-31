@@ -27,7 +27,7 @@ export default function CallSettings() {
   const [blockedNumbers, setBlockedNumbers] = useState([]);
   const [emailNotifications, setEmailNotifications] = useState('alex@example.com');
   const [smsNotifications, setSmsNotifications] = useState('+14151234567');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
@@ -65,6 +65,25 @@ export default function CallSettings() {
   }
 
   const saveCallSettings = async () => {
+
+    // Validate email notifications
+    if (emailNotifications.length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailNotifications)) {
+        toast.error('Please enter a valid email address for email notifications e.g. alex@example.com');
+        return;
+      }
+    }
+
+    // Validate SMS notifications
+    if (smsNotifications.length > 0) {
+      const smsRegex = /^\+?[1-9]\d{1,14}$/;
+      if (!smsRegex.test(smsNotifications)) {
+        toast.error('Please enter a valid phone number for SMS notifications e.g. +14151234567');
+        return;
+      }
+    }
+
     let _agent = {
       ...agent,
       language: language,
@@ -105,7 +124,7 @@ export default function CallSettings() {
           <Text size="1" as='div' color='gray'>The phone number of your business.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
-          <Text size="4" weight="medium">{auth.workspace.phoneNumber ? formatPhoneNumber(auth.workspace.phoneNumber, 'US') : 'No number connected'}</Text>
+          <Text size="4" weight="medium">{agent && agent.phoneNumber ? formatPhoneNumber(agent.phoneNumber, 'US') : 'No number connected'}</Text>
         </Col>
       </Row>
 

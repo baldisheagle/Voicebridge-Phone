@@ -26,7 +26,7 @@ export default function Integrations() {
   const [calendarNameDialogOpen, setCalendarNameDialogOpen] = useState(false);
   const [calendarId, setCalendarId] = useState(null);
   const [calendarName, setCalendarName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {

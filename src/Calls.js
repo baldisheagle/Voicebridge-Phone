@@ -7,10 +7,10 @@ import { ThemeContext } from "./Theme.js";
 import { Text, Heading, Spinner, Table, IconButton, Button, Badge, Dialog, Tabs, ScrollArea, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import Moment from 'react-moment';
-import { Plus, CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash, DotsThree } from '@phosphor-icons/react';
+import { Plus, CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash } from '@phosphor-icons/react';
 import { dbDeleteCall, dbGetCalls } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
-import { CALL_PURPOSES } from './config/lists.js';
+import { CALL_PURPOSES } from './config/retellagents.js';
 
 export default function Calls() {
 
@@ -69,13 +69,13 @@ export default function Calls() {
 
   const deleteCall = (id) => {
     console.log('Deleting call', id);
-    // dbDeleteCall(auth.workspace.id, id).then(() => {
-    //   toast.success('Call deleted');
-    //   setCalls(calls.filter(call => call.id !== id));
-    // }).catch((error) => {
-    //   toast.error('Error deleting call');
-    //   console.error(error);
-    // });
+    dbDeleteCall(auth.workspace.id, id).then(() => {
+      toast.success('Call deleted');
+      setCalls(calls.filter(call => call.id !== id));
+    }).catch((error) => {
+      toast.error('Error deleting call');
+      console.error(error);
+    });
   }
 
   if (!auth || !auth.user || loading) {
@@ -97,10 +97,9 @@ export default function Calls() {
 
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
           <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 10 }}>
-
             {calls.length > 0 && (
               <div>
-                {Object.entries(groupCallsByDay(calls)).map(([date, dayCalls]) => (
+                {Object.entries(groupCallsByDay(calls)).map(([date]) => (
                   <div key={date} style={{ marginBottom: 20 }}>
                     <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-12)', marginBottom: 10, marginTop: 20 }}>
                       <Moment format="dddd, MMMM D, YYYY">{new Date(date)}</Moment>
@@ -111,7 +110,8 @@ export default function Calls() {
                         <Table.Row>
                           <Table.ColumnHeaderCell>Time</Table.ColumnHeaderCell>
                           <Table.ColumnHeaderCell>From</Table.ColumnHeaderCell>
-                          <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                          <Table.ColumnHeaderCell>To</Table.ColumnHeaderCell>
+                          <Table.ColumnHeaderCell>Caller</Table.ColumnHeaderCell>
                           <Table.ColumnHeaderCell>Purpose</Table.ColumnHeaderCell>
                           <Table.ColumnHeaderCell>Sentiment</Table.ColumnHeaderCell>
                         </Table.Row>
@@ -119,10 +119,11 @@ export default function Calls() {
 
                       <Table.Body>
                         {calls.map((call, index) => (
-                          <React.Fragment key={call.id}>
-                            <Table.Row
-                              onClick={() => toggleRow(call.id)}
-                              style={{ cursor: 'pointer', backgroundColor: expandedRows.has(index) ? 'var(--gray-2)' : 'transparent' }}
+                          new Date(call.startTimestamp).toLocaleDateString() === date && (
+                            <React.Fragment key={call.id}>
+                              <Table.Row
+                                onClick={() => toggleRow(call.id)}
+                                style={{ cursor: 'pointer', backgroundColor: expandedRows.has(index) ? 'var(--gray-2)' : 'transparent' }}
                             >
                               <Table.Cell minWidth="140px">
                                 <Text size="2" weight="medium" as='div'>
@@ -140,6 +141,9 @@ export default function Calls() {
                                 <Text size="2" weight="medium" as='div'>{ call.direction === 'inbound' ? <ArrowDownRight weight="bold" size={12} /> : call.direction === 'outbound' ? <ArrowUpRight weight="bold" size={12} /> : null } {call.fromNumber ? formatPhoneNumber(call.fromNumber) : 'Unknown'}</Text>
                               </Table.Cell>
                               <Table.Cell minWidth="160px">
+                                <Text size="2" weight="medium" as='div'>{call.toNumber ? formatPhoneNumber(call.toNumber) : 'Unknown'}</Text>
+                              </Table.Cell>
+                              <Table.Cell minWidth="160px">
                                 <Text size="2" weight="medium" as='div'>{call.callerName ? call.callerName : 'Anonymous'}</Text>
                               </Table.Cell>
                               <Table.Cell minWidth="160px">
@@ -149,65 +153,6 @@ export default function Calls() {
                                 <Badge size="2" weight="medium" as='div' color={call.userSentiment === 'Positive' ? 'green' : call.userSentiment === 'Negative' ? 'red' : 'gray'}>
                                   {call.userSentiment ? call.userSentiment.toUpperCase() : 'Unknown'}
                                 </Badge>
-                              </Table.Cell>
-                              <Table.Cell minWidth="160px">
-                               {/* TODO: Add call actions, delete, recording download, transcript download, etc. */}
-                                {/* <Dialog.Root>
-                                  <Dialog.Trigger>
-                                    <IconButton variant="ghost" size="1">
-                                      <DotsThree weight="bold" size={16} />
-                                    </IconButton>
-                                  </Dialog.Trigger>
-
-                                  <Dialog.Content style={{ maxWidth: 600 }}>
-                                    <Dialog.Title>Call Details</Dialog.Title>
-                                    <Dialog.Description style={{ marginBottom: 0, marginTop: 0 }}>
-                                      View and manage call information
-                                    </Dialog.Description>
-
-                                    <Row style={{ marginTop: 10 }}>
-                                      <Col xs={12}>
-                                        <ScrollArea style={{ height: 300 }}>
-                                          <Text as="div" size="2" style={{ whiteSpace: 'pre-wrap' }}>
-                                            {call.transcript || 'No transcript available'}
-                                          </Text>
-                                        </ScrollArea>
-                                      </Col>
-                                    </Row>
-
-                                    <Row style={{ marginTop: 10 }}>
-                                      <Col xs={12}>
-                                        {call.recordingUrl ? (
-                                          <Row>
-                                            <Col xs={12}>
-                                              <audio controls style={{ width: '100%' }}>
-                                                    <source src={call.recordingUrl} type="audio/mpeg" />
-                                                    Your browser does not support the audio element.
-                                                  </audio>
-                                                </Col>
-                                                <Col xs={12} style={{ marginTop: 8 }}>
-                                                  <Button size="2" variant="soft" onClick={() => window.open(call.recordingUrl)}>
-                                                    Download Recording
-                                                  </Button>
-                                                </Col>
-                                              </Row>
-                                            ) : (
-                                              <Text as="div" size="2">No recording available</Text>
-                                            )}
-                                      </Col>
-                                    </Row>
-
-                                    <Row style={{ marginTop: 16 }}>
-                                      <Col xs={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                        <Dialog.Close>
-                                          <Button variant="soft" color="gray">
-                                            Close
-                                          </Button>
-                                        </Dialog.Close>
-                                      </Col>
-                                    </Row>
-                                  </Dialog.Content>
-                                </Dialog.Root> */}
                               </Table.Cell>
                             </Table.Row>
                             {expandedRows.has(call.id) && (
@@ -255,7 +200,7 @@ export default function Calls() {
                                             <Button variant="soft" color="gray">Cancel</Button>
                                           </AlertDialog.Cancel>
                                           <AlertDialog.Action>
-                                            <Button variant="soft" color="red" onClick={() => deleteCall(call.id)}>Delete</Button>
+                                            <Button variant="solid" color="red" onClick={() => deleteCall(call.id)}>Delete</Button>
                                           </AlertDialog.Action>
                                       </Row>
                                     </AlertDialog.Content>
@@ -264,6 +209,7 @@ export default function Calls() {
                               </Table.Row>
                             )}
                           </React.Fragment>
+                          )
                         ))}
                       </Table.Body>
                     </Table.Root>

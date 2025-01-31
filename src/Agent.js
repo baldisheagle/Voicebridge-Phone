@@ -1,40 +1,58 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useRequireAuth } from './use-require-auth.js';
-import { useMediaQuery } from './shared-functions.js';
-import { Row } from 'react-bootstrap';
-import { ThemeContext } from "./Theme.js";
-import { Heading, Separator, Spinner, TabNav, Text } from '@radix-ui/themes';
+import { Row, Col } from 'react-bootstrap';
+import { Button, Heading, Spinner, TabNav, TextField } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import BusinessProfile from './components/agent/BusinessProfile.js';
-import CallSettings from './components/agent/CallSettings.js';
-import Skills from './components/agent/Skills.js';
-import FAQ from './components/agent/FAQ.js';
-import Questions from './components/agent/Questions.js';
+import BusinessInfo from './components/agent/BusinessInfo.js';
+import Settings from './components/agent/Settings.js';
+import { dbGetAgent, dbUpdateAgent } from './utilities/database.js';
+import { ArrowLeft, Pencil } from '@phosphor-icons/react';
+
 export default function Agent() {
 
   const auth = useRequireAuth();
-
   const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext);
-  let isPageWide = useMediaQuery('(min-width: 960px)');
 
-  const [activeTab, setActiveTab] = useState('callSettings');
-  const [loading, setLoading] = useState(false);
+  const { agentId } = useParams();
+
+  const [agent, setAgent] = useState(null);
+  const [editedName, setEditedName] = useState('');
+  const [editingName, setEditingName] = useState(false);
+  const [activeTab, setActiveTab] = useState('settings');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (auth && auth.user) {
+    if (auth && auth.user && auth.workspace) {
       initialize();
-
     }
   }, [auth]);
 
   // Initialize
   const initialize = async () => {
+    setLoading(true);
+    let agent = await dbGetAgent(auth.workspace.id, agentId);
+    if (agent) {
+      setAgent(agent);
+      setEditedName(agent.name);
+    } else {
+      toast.error('Agent not found');
+      navigate('/agents');
+    }
 
+    setLoading(false);  
   }
 
-  if (!auth || !auth.user || loading) {
+  const saveAgentName = async () => {
+    let _agent = {
+      ...agent,
+      name: editedName
+    }
+    await dbUpdateAgent(_agent);
+    setEditingName(false);
+  }
+
+  if (!auth || !auth.user || !auth.workspace || !agentId || !agent || loading) {
     return (
       <div style={{ width: '100%', minHeight: '100vh' }}>
         <Row style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginLeft: 0, marginRight: 0, height: '80vh' }}>
@@ -47,35 +65,75 @@ export default function Agent() {
   return (
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
 
-      <Heading size='4'>Agent Settings</Heading>
+      <Button size="1" variant="ghost" color="gray" onClick={() => navigate('/agents')} style={{ marginTop: 0 }}>
+        <ArrowLeft size={12} weight="bold" color='gray' style={{ marginRight: 5 }} /> Back to all agents
+      </Button>
 
-      <div style={{ width: '100%', marginTop: 10 }}>
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 5 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={4} style={{ padding: 0 }}>
+          {editingName ? (
+            <TextField.Root 
+              variant="surface" 
+              placeholder="John Doe" 
+              style={{ marginTop: 5, marginBottom: 5 }}
+              value={editedName} 
+              onChange={(e) => e.target.value.length > 0 ? setEditedName(e.target.value) : setEditedName('Untitled')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  saveAgentName();
+                }
+              }}
+            />
+          ) : (
+            <Heading
+              size='5'
+              as="div"
+              style={{ marginTop: 5, cursor: 'pointer' }}
+              onClick={() => {
+                setEditingName(true);
+                setEditedName(agent.name);
+              }}
+            >
+              {editedName} <Pencil size={16} color='gray' style={{ marginLeft: 5 }} />
+            </Heading>
+          )}
+        </Col>
+      </Row>
+
+      <div style={{ width: '100%', marginTop: 0 }}>
           <TabNav.Root>
-            <TabNav.Link href="#" active={activeTab === 'callSettings'} onClick={() => setActiveTab('callSettings')}>
-              Call Settings
+            <TabNav.Link href="#" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
+              Settings
             </TabNav.Link>
-            <TabNav.Link href="#" active={activeTab === 'questions'} onClick={() => setActiveTab('questions')}>
+
+            <TabNav.Link href="#" active={activeTab === 'businessInfo'} onClick={() => setActiveTab('businessInfo')}>
+              Business Info
+            </TabNav.Link>
+
+            {/* <TabNav.Link href="#" active={activeTab === 'questions'} onClick={() => setActiveTab('questions')}>
               Questions
-            </TabNav.Link>
-            <TabNav.Link href="#" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')}>
+            </TabNav.Link> */}
+
+            {/* <TabNav.Link href="#" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')}>
               Skills
-            </TabNav.Link>
+            </TabNav.Link> */}
+
+            {/* <TabNav.Link href="#" active={activeTab === 'faq'} onClick={() => setActiveTab('faq')}>
+              FAQ
+            </TabNav.Link> */}
+
           </TabNav.Root>
         </div>
 
 
       <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
 
-        {activeTab === 'callSettings' && (    
-          <CallSettings />
+        {activeTab === 'settings' && (    
+          <Settings agent={agent} />
         )}
 
-        {activeTab === 'questions' && (
-          <Questions />
-        )}
-
-        {activeTab === 'skills' && (
-          <Skills />
+        {activeTab === 'businessInfo' && (
+          <BusinessInfo agent={agent} />
         )}
 
       </div>

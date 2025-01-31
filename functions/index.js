@@ -31,6 +31,12 @@ const emailTemplates = {
 // Allowed origins
 const allowedOrigins = ['https://voicebridge-app.web.app', 'https://app.voicebridgeai.com']; // , 'http://localhost:3000'
 
+// Import constants
+const { 
+  RETELL_TEMPLATE_BASIC_INBOUND_LLM, 
+  RETELL_TEMPLATE_BASIC_INBOUND_AGENT
+} = require('./templates');
+
 // Cors options
 const corsOptions = {
   origin: (origin, callback) => {
@@ -110,13 +116,14 @@ async function saveCallToDatabase(call) {
   
   console.log('Agent ID found for call', call.agent_id);
 
-  const workspaces = await db.collection('workspaces').where('retellAgentId', '==', call.agent_id).limit(1).get();
+  const agents = await db.collection('agents').where('retellAgentId', '==', call.agent_id).limit(1).get();
   
-  if (workspaces.docs.length === 0) {
-    console.error('No workspace found for agent', call.agent_id);
+  if (agents.docs.length === 0) {
+    console.error('No agent found for call', call.agent_id);
     return;
   }
-  const workspaceId = workspaces.docs[0].id;
+  
+  const workspaceId = agents.docs[0].data().workspaceId;
   
   console.log('Workspace found for agent', call.agent_id, workspaceId);
 
@@ -147,6 +154,109 @@ async function saveCallToDatabase(call) {
   });
   return;
 }
+
+/*
+  Function: Create Retell Agent
+  Parameters:
+    agentName
+  Return:
+    null
+*/
+
+exports.createRetellAgent = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+    if (req && req.headers) {
+      if (req.body && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer) {
+        
+        console.log('Creating Retell Agent', req.body);
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Create LLM
+        let llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_LLM));
+
+        // Replace variables in model
+        llm.model = req.body.model;
+        
+        // Replace variables in begin_message
+        llm.begin_message = llm.begin_message.replaceAll('[[AGENT_NAME]]', req.body.agentName);
+        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.begin_message = llm.begin_message.replaceAll('[[INCLUDE_DISCLAIMER]]', req.body.includeDisclaimer ? 'If this is an emergency, please hang up and dial Nine-One-One.' : '');
+        // Replace variables in general_prompt
+        llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
+
+        console.log('LLM', llm);
+
+        // Create LLM
+        const retellLlm = await client.llm.create(llm);
+
+        console.log('Retell LLM created', retellLlm);
+
+        if (!retellLlm) {
+          console.error('Error creating Retell LLM', retellLlm);
+          res.status(500).send(JSON.stringify({ error: "Error creating Retell LLM" }));
+          return;
+        }
+
+        // Create Agent
+        let agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_AGENT));
+        agent.response_engine.llm_id = retellLlm.llm_id;
+        agent.agent_name = req.body.agentName;
+        agent.voice_id = req.body.voiceId;
+        agent.language = req.body.language;
+
+        console.log('Agent', agent);
+
+        // Create Agent
+        const retellAgent = await client.agent.create(agent);
+
+        if (!retellAgent) {
+          console.error('Error creating Retell Agent', retellAgent);
+          res.status(500).send(JSON.stringify({ error: "Error creating Retell Agent" }));
+          return;
+        }
+
+        console.log('Retell Agent created', retellAgent);
+
+        // Save agent to database
+        const dbAgents = await db.collection('agents').where('id', '==', req.body.agentId).limit(1).get();
+
+        if (dbAgents.docs.length > 0) {
+          await dbAgents.docs[0].ref.update({
+            retellLlmId: retellLlm.llm_id,
+            retellAgentId: retellAgent.agent_id,
+            updatedAt: new Date().toISOString(),
+          });
+          console.log('Agent updated with Retell LLM and Agent', dbAgents.docs[0].data());
+          res.status(200).send(JSON.stringify({ retell_llm_id: retellLlm.llm_id, retell_agent_id: retellAgent.agent_id }));
+          return;
+
+        } else {
+          console.error('No agent found in database', req.body.agentId);
+          res.status(400).send(JSON.stringify({ error: "No agent found in database" }));
+          return;
+        }
+
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+  });
+  
+});
+
 
 /*
   Function: Get access token from Epic

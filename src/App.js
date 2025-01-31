@@ -18,8 +18,10 @@ import NotFound from "./NotFound.js";
 import Dashboard from "./Dashboard.js";
 import Settings from './Settings.js';
 import Calls from './Calls.js';
+import Agents from './Agents.js';
 import Agent from './Agent.js';
 import Business from './Business.js';
+import Integrations from './Integrations.js';
 import Profile from './components/common/Profile.js';
 import SidebarComponent from './components/common/Sidebar.js';
 
@@ -43,8 +45,10 @@ export default function App() {
                   {/* Main */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calls" element={<Calls />} />
-                  <Route path="/agent" element={<Agent />} />
+                  <Route path="/agents" element={<Agents />} />
+                  <Route path="/agent/:agentId" element={<Agent />} />
                   <Route path="/business" element={<Business />} />
+                  <Route path="/integrations" element={<Integrations />} />
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
                   {/* Catch all */}
