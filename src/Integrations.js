@@ -18,7 +18,7 @@ export default function Integrations() {
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('calendars');
+  const [activeTab, setActiveTab] = useState('phoneNumbers');
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
       initialize();
@@ -50,9 +50,9 @@ export default function Integrations() {
 
       <div style={{ width: '100%', marginTop: 10 }}>
         <TabNav.Root>
-          <TabNav.Link href='#' active={activeTab === 'calendars'} onClick={() => setActiveTab('calendars')}>
+          {/* <TabNav.Link href='#' active={activeTab === 'calendars'} onClick={() => setActiveTab('calendars')}>
             Calendars
-          </TabNav.Link>
+          </TabNav.Link> */}
           <TabNav.Link href='#' active={activeTab === 'phoneNumbers'} onClick={() => setActiveTab('phoneNumbers')}>
             Phone Numbers
           </TabNav.Link>

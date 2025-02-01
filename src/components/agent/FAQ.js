@@ -1,24 +1,20 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRequireAuth } from '../../use-require-auth.js';
-import { useMediaQuery } from '../../shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
-import { ThemeContext } from "../../Theme.js";
-import { Button, Spinner, Text, Switch, Dialog, TextArea, Card, IconButton, AlertDialog } from '@radix-ui/themes';
+import { Button, Spinner, Text, Dialog, TextArea, Card, IconButton, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { dbUpdateAgent, dbGetAgent } from '../../utilities/database.js';
+import { dbUpdateAgent } from '../../utilities/database.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Pencil, Plus, Trash } from '@phosphor-icons/react';
+import { updateRetellLlmAndAgent } from '../../utilities/retell.js';
 
-export default function FAQ() {
+export default function FAQ({ agent }) {
 
   const auth = useRequireAuth();
 
   const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext);
-  let isPageWide = useMediaQuery('(min-width: 960px)');
 
-  const [agent, setAgent] = useState(null);
   const [faq, setFAQ] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
@@ -33,14 +29,7 @@ export default function FAQ() {
   // Initialize
   const initialize = async () => {
     setLoading(true);
-    dbGetAgent(auth.workspace.id).then((agent) => {
-      if (agent) {
-        setAgent(agent);
-        setFAQ(agent.faq || []);
-      } else {
-        navigate('/calls');
-      }
-    });
+    setFAQ(agent.faq);
     setLoading(false);
   }
 
@@ -52,6 +41,8 @@ export default function FAQ() {
     }
     let res = await dbUpdateAgent(_agent);
     if (res) {
+      // Update Retell LLM and Agent
+      await updateRetellLlmAndAgent(_agent);
       toast.success('FAQ updated');
     } else {
       toast.error('Error updating FAQ');
@@ -99,8 +90,8 @@ export default function FAQ() {
     }
     
     return (
-      <Card>
-        <Text size="2" as='div' weight="bold">{faq.question}</Text>
+      <Card style={{ padding: 20, marginBottom: 20 }}>
+        <Text size="3" as='div' weight="bold">{faq.question}</Text>
         <Text size="2" as='div' style={{ marginTop: 5 }}>{faq.answer}</Text>
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
           <Dialog.Root>
@@ -178,12 +169,11 @@ export default function FAQ() {
     <div style={{ width: '100%' }}>
 
       {/* FAQ */}    
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
-
-        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Frequently Asked Questions</Text>
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 10 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={4} style={{ padding: 10 }}>
+          <Text size="2" as='div' color='gray'>{faq.length} questions</Text>
         </Col>
-        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10, textAlign: 'right' }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 10, textAlign: 'right' }}>
           <Dialog.Root>
             <Dialog.Trigger>
               <Button variant="outline">Add <Plus weight="bold" size={16} /></Button>
@@ -227,12 +217,12 @@ export default function FAQ() {
 
       {/* FAQ */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
-        <Col xs={12} sm={12} md={12} lg={9} xl={7} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+        <Col xs={12} sm={12} md={12} lg={9} xl={7} style={{ padding: 10 }}>
           {faq.length === 0 && (
             <Text size="2" color="gray">No questions</Text>
           )}
           {faq.length > 0 && (
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 20, width: '100%' }}>
               {faq.map((faq, index) => (
                 <FAQ key={index} faq={faq} />
               ))}

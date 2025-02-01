@@ -166,7 +166,7 @@ exports.createRetellAgent = onRequest((req, res) => {
   corsMiddleware(req, res, async () => {
     if (req && req.headers) {
 
-      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode) {
+      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.faq && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode) {
         
         console.log('Creating Retell Agent');
 
@@ -197,6 +197,7 @@ exports.createRetellAgent = onRequest((req, res) => {
         llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[FAQ]]', req.body.faq);
 
         // Create LLM
         const retellLlm = await client.llm.create(llm);
@@ -325,7 +326,7 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
 
       console.log('Updating Retell LLM and Agent');
 
-      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode && req.body.retellLlmId && req.body.retellAgentId) {
+      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.faq && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode && req.body.retellLlmId && req.body.retellAgentId) {
         
         console.log('Updating Retell Agent');
 
@@ -356,15 +357,16 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
         llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[FAQ]]', req.body.faq);
 
         // Create LLM
         const retellLlm = await client.llm.update(req.body.retellLlmId, llm);
 
-        console.log('Retell LLM created', retellLlm);
+        console.log('Retell LLM updated');
 
         if (!retellLlm) {
-          console.error('Error creating Retell LLM', retellLlm);
-          res.status(500).send(JSON.stringify({ error: "Error creating Retell LLM" }));
+          console.error('Error updating Retell LLM', retellLlm);
+          res.status(500).send(JSON.stringify({ error: "Error updating Retell LLM" }));
           return;
         }
 

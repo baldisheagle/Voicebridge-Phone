@@ -1,10 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRequireAuth } from '../../use-require-auth.js';
-import { useMediaQuery } from '../../shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
-import { ThemeContext } from "../../Theme.js";
-import { Button, Spinner, Text, TextField, TextArea, Select, Switch, Badge } from '@radix-ui/themes';
+import { Button, Spinner, Text, TextField, TextArea, Select, Badge } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { TIMEZONE_OFFSETS, HOURS } from '../../config/retellagents.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
@@ -16,8 +14,6 @@ export default function BusinessInfo({ agent }) {
   const auth = useRequireAuth();
 
   const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext);
-  let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [name, setName] = useState(agent.businessInfo.name || '');
   const [description, setDescription] = useState(agent.businessInfo.description || '');

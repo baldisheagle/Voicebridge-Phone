@@ -140,6 +140,24 @@ const createBusinessInfo = (businessInfo) => {
     }
 }
 
+// Create FAQ from faq object
+const createFAQ = (faq) => {
+
+    let knowledge = '';
+    if (faq.length > 0) {
+        knowledge += `Frequently-asked questions:\n`;
+        faq.forEach(question => {
+            knowledge += `Question: ${question.question}\n`;
+            knowledge += `Answer: ${question.answer}\n`;
+        });
+    }
+    if (knowledge === '') {
+        return null;
+    } else {
+        return knowledge;
+    }
+}
+
 // Create Retell Agent
 export const createRetellAgent = async (agent) => {
     let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgent', {
@@ -154,6 +172,7 @@ export const createRetellAgent = async (agent) => {
             agentName: agent.agentName,
             businessName: agent.businessInfo.name,
             businessInfo: createBusinessInfo(agent.businessInfo),
+            faq: createFAQ(agent.faq),
             model: agent.model,
             voiceId: agent.voiceId,
             language: agent.language,
@@ -213,6 +232,7 @@ export const updateRetellLlmAndAgent = async (agent) => {
             agentName: agent.agentName,
             businessName: agent.businessInfo.name,
             businessInfo: createBusinessInfo(agent.businessInfo),
+            faq: createFAQ(agent.faq),
             model: agent.model,
             voiceId: agent.voiceId,
             language: agent.language,

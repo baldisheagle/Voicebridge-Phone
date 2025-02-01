@@ -71,6 +71,7 @@ export default function Agents() {
           model: BASIC_PHONE_RECEPTIONIST_TEMPLATE.model,
           includeDisclaimer: BASIC_PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
           businessInfo: BASIC_PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
+          faq: [],
           phoneNumber: null,
           workspaceId: auth.workspace.id,
           createdBy: auth.user.uid,
@@ -148,9 +149,9 @@ export default function Agents() {
 
         {/* Agents */}
         {agents.length > 0 && (
-          <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 20, marginBottom: 20 }}>
+          <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 10, marginBottom: 20 }}>
             {agents.map((agent, index) => (
-              <Col key={index} xs={12} sm={6} md={6} lg={6}>
+              <Col key={index} xs={12} sm={6} md={6} lg={6} style={{ padding: 10 }}>
                 <Card>
                   <Row style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, height: 180 }}>
                     <div style={{ width: '100%' }}>

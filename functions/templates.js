@@ -25,6 +25,8 @@ exports.RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM = {
 
       [[BUSINESS_INFO]]
 
+      [[FAQ]]
+
       ## Call flow
 
       1. When the call begins, introduce yourself, let the caller know that staff is unavailable right now, and ask the caller for their name.

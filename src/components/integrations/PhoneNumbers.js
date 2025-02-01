@@ -302,6 +302,7 @@ export default function PhoneNumbers() {
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item onClick={() => setImportNumberDialogOpen(true)}><ArrowsLeftRight /> Import a number</DropdownMenu.Item>
+              {/* TODO: Allow users to buy numbers only if they have a valid payment method on file */}
               <DropdownMenu.Item onClick={() => setBuyNumberDialogOpen(true)}><CreditCard /> Buy a number</DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>

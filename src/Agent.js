@@ -6,6 +6,7 @@ import { Button, Heading, Spinner, TabNav, TextField } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/agent/BusinessInfo.js';
 import Settings from './components/agent/Settings.js';
+import FAQ from './components/agent/FAQ.js';
 import { dbGetAgent, dbUpdateAgent } from './utilities/database.js';
 import { ArrowLeft, Pencil, UserCircleCheck } from '@phosphor-icons/react';
 
@@ -84,6 +85,9 @@ export default function Agent() {
               placeholder="Jane Doe" 
               style={{ marginTop: 10, marginBottom: 20 }}
               value={editedName} 
+              onFocus={(e) => e.target.select()}
+              onBlur={() => saveAgentName()}
+              maxLength={60}
               onChange={(e) => e.target.value.length > 0 ? setEditedName(e.target.value) : setEditedName('Untitled')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -125,9 +129,9 @@ export default function Agent() {
               Skills
             </TabNav.Link> */}
 
-            {/* <TabNav.Link href="#" active={activeTab === 'faq'} onClick={() => setActiveTab('faq')}>
+            <TabNav.Link href="#" active={activeTab === 'faq'} onClick={() => setActiveTab('faq')}>
               FAQ
-            </TabNav.Link> */}
+            </TabNav.Link>
 
           </TabNav.Root>
         </div>
@@ -141,6 +145,10 @@ export default function Agent() {
 
         {activeTab === 'businessInfo' && (
           <BusinessInfo agent={agent} />
+        )}
+
+        {activeTab === 'faq' && (
+          <FAQ agent={agent} />
         )}
 
       </div>

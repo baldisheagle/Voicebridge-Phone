@@ -28,7 +28,7 @@ export default function Billing() {
 
   // Initialize
   const initialize = async() => {
-    
+    setLoading(false);
   }
   
   if (!auth || !auth.user || loading) {

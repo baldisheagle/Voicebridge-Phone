@@ -39,7 +39,7 @@ export default function CallSettings({ agent }) {
   }
 
   const saveCallSettings = async () => {
-
+    
     // If the number if not null, make sure the phone number is not connected to another agent that is not this one
     if (agentPhoneNumber) {
       let a = agents.find(a => a.phoneNumber === agentPhoneNumber && a.id !== agent.id);
@@ -68,7 +68,7 @@ export default function CallSettings({ agent }) {
           let phoneNumber = phoneNumbers.find(p => p.id === agentPhoneNumber);
           if (phoneNumber) {
             // Connect phone number to agent
-            console.log('Connecting phone number to agent', phoneNumber.number, agent.retellAgentId);
+            // console.log('Connecting phone number to agent', phoneNumber.number, agent.retellAgentId);
             await connectRetellPhoneNumberToAgent(agent.retellAgentId, phoneNumber.number);
           }
         }

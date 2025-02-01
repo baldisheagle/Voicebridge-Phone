@@ -170,7 +170,7 @@ export default function Dashboard() {
                                 <CaretDown weight="bold" size={12} />
                               }
                             </IconButton>
-                            <Moment format="hh:mm A">{call.startTimestamp}</Moment>
+                            <Moment format="ddd MMM D, hh:mm A">{call.startTimestamp}</Moment>
                           </Text>
                         </Table.Cell>
                         <Table.Cell minWidth="160px">
