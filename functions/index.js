@@ -457,6 +457,67 @@ exports.importRetellPhoneNumber = onRequest((req, res) => {
     }
 
   });
+
+});
+
+/*
+  Function: Buy Retell Phone Number
+  Parameters:
+    areaCode
+    nickname
+  Return:
+    null
+*/
+
+exports.buyRetellPhoneNumber = onRequest((req, res) => {
+
+  console.log('Buying Retell Phone Number', req.body);
+  
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+      if (req.body && req.body.areaCode && req.body.nickname) {
+        
+        console.log('Buying Retell Phone Number');
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Buy Phone Number
+        try {
+          let phoneNumber = await client.phoneNumber.create({
+            area_code: parseInt(req.body.areaCode),
+            nickname: req.body.nickname,
+          });
+
+          console.log('Retell Phone Number bought', phoneNumber);
+          res.status(200).send(JSON.stringify(phoneNumber));
+          return;
+
+        } catch (error) {
+          console.error('Error buying phone number', error);
+          res.status(500).send(JSON.stringify({ error: "Error buying phone number" }));
+          return;
+        }
+
+        // res.status(200).send(JSON.stringify({ phone_number: '1234567890', last_modification_timestamp: '2021-01-01T00:00:00.000Z' }));
+        // return;
+
+      } else {
+        console.error('Missing parameters');
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+
+  });
+  
 });
 
 /*
@@ -475,7 +536,6 @@ exports.deleteRetellPhoneNumber = onRequest((req, res) => {
 
     if (req && req.headers) {
       if (req.body && req.body.phoneNumber) {
-        console.log('Deleting Retell Phone Number');
 
         // Create client
         const client = new Retell({
@@ -483,7 +543,13 @@ exports.deleteRetellPhoneNumber = onRequest((req, res) => {
         });
 
         // Delete Phone Number
-        await client.phoneNumber.delete(req.body.phoneNumber);
+        try {
+          await client.phoneNumber.delete(req.body.phoneNumber);
+        } catch (error) {
+          console.error('Error deleting phone number', error);
+          res.status(500).send(JSON.stringify({ error: "Error deleting phone number" }));
+          return;
+        }
 
         console.log('Retell Phone Number deleted', req.body.phoneNumber);
         res.status(200).send(JSON.stringify({ message: "Retell Phone Number deleted" }));

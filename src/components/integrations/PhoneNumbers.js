@@ -10,7 +10,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ArrowsLeftRight, CreditCard, Plus, Pencil, Phone, Trash } from '@phosphor-icons/react';
 import { dbDeletePhoneNumber, dbGetAgents, dbGetPhoneNumbers, dbUpdatePhoneNumber } from '../../utilities/database.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
-import { importRetellPhoneNumber, deleteRetellPhoneNumber } from '../../utilities/retell.js';
+import { importRetellPhoneNumber, deleteRetellPhoneNumber, buyRetellPhoneNumber } from '../../utilities/retell.js';
 import { dbAddPhoneNumber } from '../../utilities/database.js';
 
 export default function PhoneNumbers() {
@@ -23,10 +23,16 @@ export default function PhoneNumbers() {
 
   const [phoneNumbers, setPhoneNumbers] = useState([]);
 
+  // Import number dialog
   const [importNumberDialogOpen, setImportNumberDialogOpen] = useState(false);
   const [importPhoneNumber, setImportPhoneNumber] = useState('');
   const [importTerminationUri, setImportTerminationUri] = useState('');
   const [importNickname, setImportNickname] = useState('');
+
+  // Buy number dialog
+  const [buyNumberDialogOpen, setBuyNumberDialogOpen] = useState(false);
+  const [buyNumberAreaCode, setBuyNumberAreaCode] = useState('');
+  const [buyNumberNickname, setBuyNumberNickname] = useState('');
 
   const [loading, setLoading] = useState(true);
 
@@ -51,8 +57,13 @@ export default function PhoneNumbers() {
     _number.name = name;
     let success = await dbUpdatePhoneNumber(_number);
     if (success) {
-      phoneNumbers.find(p => p.id === _number.id).name = name;
-      setPhoneNumbers(phoneNumbers);
+      let _phoneNumbers = phoneNumbers.map(p => {
+        if (p.id === _number.id) {
+          p.name = name;
+        }
+        return p;
+      });
+      setPhoneNumbers(_phoneNumbers);
       toast.success('Phone number name updated');
     } else {
       toast.error('Error updating phone number name');
@@ -61,21 +72,30 @@ export default function PhoneNumbers() {
 
   // Import phone number
   const importPhoneNumberToRetell = async () => {
-    console.log('Importing phone number', importPhoneNumber, importTerminationUri, importNickname);
+
+    setLoading(true);
+
+    // console.log('Importing phone number', importPhoneNumber, importTerminationUri, importNickname);
 
     // Validate phone number format
     if (!importPhoneNumber.match(/^\+1\d{10}$/)) {
       toast.error('Phone number must be in format +14153456789');
+      setLoading(false);
       return;
     }
 
+    // Check if phone number is already imported
+    let phoneNumber = phoneNumbers.find(p => p.number === importPhoneNumber);
+    if (phoneNumber) {
+      toast.error('Phone number already imported');
+      setLoading(false);
+      return;
+    }
+
+    // Import phone number to Retell
     let success = await importRetellPhoneNumber(importPhoneNumber, importTerminationUri, importNickname);
     
     if (success) {
-      setImportNumberDialogOpen(false);
-      setImportPhoneNumber('');
-      setImportTerminationUri('');
-      setImportNickname('');
       // Add phone number to phone numbers database
       let uuid = uuidv4();
       let phoneNumber = {
@@ -91,16 +111,25 @@ export default function PhoneNumbers() {
       }
       let res = await dbAddPhoneNumber(phoneNumber);
       if (res) {
-        let _phoneNumbers = phoneNumbers.push(phoneNumber);
+        // Update phone numbers
+        let _phoneNumbers = [...phoneNumbers, phoneNumber];
         setPhoneNumbers(_phoneNumbers);
         toast.success('Phone number imported');
+        setImportNumberDialogOpen(false);
+        setImportPhoneNumber('');
+        setImportTerminationUri('');
+        setImportNickname('');
       } else {
         toast.error('Error importing phone number');
       }
     } else {
       toast.error('Error importing phone number');
     }
+
+    setLoading(false);
   }
+
+  // Buy number
 
   // Delete phone number
   const onDeletePhoneNumber = async (id) => {
@@ -120,21 +149,30 @@ export default function PhoneNumbers() {
     const deleteNumber = async () => {
 
       console.log('Deleting number', number.id);
+
+      try {
       
-      // Check if number if associated with an agent
-      let agents = await dbGetAgents(auth.workspace.id);
-      let agent = agents.find(a => a.phoneNumberId === number.id);
-      if (agent) {
-        toast.error('Phone number is associated with an agent');
-        return;
-      }
-      
-      let success = await dbDeletePhoneNumber(number.id, auth.workspace.id);
-      if (success) {
-        await deleteRetellPhoneNumber(number.number);
-        toast.success('Phone number deleted');
-        onDeletePhoneNumber(number.id);
-      } else {
+        // Check if number if associated with an agent
+        let agents = await dbGetAgents(auth.workspace.id);
+        let agent = agents.find(a => a.phoneNumberId === number.id);
+        if (agent) {
+          toast.error('Cannot delete phone number associated with an agent');
+          return;
+        }
+        
+        // Delete phone number from database
+        let res = await dbDeletePhoneNumber(number.id, auth.workspace.id);
+        if (res) {
+          onDeletePhoneNumber(number.id);
+          toast.success('Phone number deleted');
+          // Delete phone number from Retell
+          await deleteRetellPhoneNumber(number.number);
+        } else {
+          toast.error('Error deleting phone number');
+        }
+
+      } catch (error) {
+        console.error('Error deleting phone number', error);
         toast.error('Error deleting phone number');
       }
 
@@ -204,6 +242,42 @@ export default function PhoneNumbers() {
     )
   }
 
+  // Buy number
+  const buyNumber = async () => {
+    console.log('Buying number', buyNumberAreaCode, buyNumberNickname);
+    setLoading(true);
+    let newNumber = await buyRetellPhoneNumber(buyNumberAreaCode, buyNumberNickname);
+    if (newNumber) {
+      // Add phone number to phone numbers database
+      let uuid = uuidv4();
+      let phoneNumber = {
+        id: uuid,
+        name: buyNumberNickname,
+        number: newNumber.phone_number || null,
+        areaCode: buyNumberAreaCode || null,
+        type: 'bought',
+        lastModificationTimestamp: newNumber.last_modification_timestamp || null,
+        workspaceId: auth.workspace.id,
+        createdBy: auth.user.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      let res = await dbAddPhoneNumber(phoneNumber);
+      if (res) {
+        toast.success('Phone number bought');
+        setBuyNumberDialogOpen(false);
+        setBuyNumberAreaCode('');
+        setBuyNumberNickname('');
+        setPhoneNumbers([...phoneNumbers, phoneNumber]);
+      } else {
+        toast.error('Error buying phone number');
+      }
+    } else {
+      toast.error('Error buying phone number');
+    }
+    setLoading(false);
+  }
+
   if (!auth || !auth.user || !auth.workspace || loading) {
     return (
       <div style={{ width: '100%', minHeight: '100vh' }}>
@@ -228,7 +302,7 @@ export default function PhoneNumbers() {
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item onClick={() => setImportNumberDialogOpen(true)}><ArrowsLeftRight /> Import a number</DropdownMenu.Item>
-              <DropdownMenu.Item><CreditCard /> Buy a number</DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => setBuyNumberDialogOpen(true)}><CreditCard /> Buy a number</DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </Col>
@@ -247,6 +321,7 @@ export default function PhoneNumbers() {
         )}
       </div>
 
+      {/* Import number dialog */}
       <Dialog.Root open={importNumberDialogOpen} onOpenChange={setImportNumberDialogOpen}>
         <Dialog.Content>
           <Dialog.Title>Import number</Dialog.Title>
@@ -275,13 +350,46 @@ export default function PhoneNumbers() {
               </Button>
             </Dialog.Close>
             <Dialog.Close>
-              <Button variant="solid" onClick={() => importPhoneNumberToRetell()} disabled={importPhoneNumber.length !== 12 || importTerminationUri.length === 0 || importNickname.length === 0}>
+              <Button variant="solid" onClick={() => importPhoneNumberToRetell()} disabled={importPhoneNumber.length !== 12 || importTerminationUri.length === 0 || importNickname.length === 0 || loading}>
                 Save
               </Button>
             </Dialog.Close>
           </Row>
 
         </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Buy number dialog */}
+      <Dialog.Root open={buyNumberDialogOpen} onOpenChange={setBuyNumberDialogOpen}>
+        <Dialog.Content>
+          <Dialog.Title>Buy number</Dialog.Title>
+          <VisuallyHidden>
+          <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
+        </VisuallyHidden>
+
+        <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
+        <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the area code you want to buy a number in (US only).</Text>
+        <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} />
+
+        <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
+        <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
+        <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
+
+        <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
+          <Dialog.Close>
+            <Button variant="soft" color="gray">
+              Cancel
+            </Button>
+          </Dialog.Close>
+          <Dialog.Close>
+            <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberAreaCode.length !== 3 || buyNumberNickname.length === 0 || loading}>
+              Buy number
+            </Button>
+          </Dialog.Close>
+        </Row>
+        
+        </Dialog.Content>
+
       </Dialog.Root>
 
       <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />

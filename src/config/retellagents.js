@@ -12,7 +12,7 @@ export const BASIC_PHONE_RECEPTIONIST_TEMPLATE = {
     icon: '/assets/agents/basic-phone-receptionist.svg',
     businessInfo: {
         name: "Clinic",
-        timezone: "-8",
+        timezone: -8,
         businessHours: {
             monday: { id: 'monday', value: 'monday', label: 'Monday', isOpen: true, open: '09:00', close: '17:00' },
             tuesday: { id: 'tuesday', value: 'tuesday', label: 'Tuesday', isOpen: true, open: '09:00', close: '17:00' },

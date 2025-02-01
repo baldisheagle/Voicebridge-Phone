@@ -42,7 +42,6 @@ export const dbGetPhoneNumbers = async(workspaceId) => {
 
 // Update phone number
 export const dbUpdatePhoneNumber = async(_phoneNumber) => {
-  console.log(_phoneNumber);
   try {
     const snapshot = await getDocs(query(collection(db, "phonenumbers"), where("workspaceId", "==", _phoneNumber.workspaceId), where("id", "==", _phoneNumber.id), limit(1)));
     if (snapshot.empty) {

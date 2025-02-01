@@ -151,8 +151,8 @@ export default function BusinessInfo({ agent }) {
         </Col>
       </Row>
 
-            {/* Email */}
-            <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      {/* Email */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Email</Text>
           <Text size="1" as='div' color='gray'>The email of your business.</Text>

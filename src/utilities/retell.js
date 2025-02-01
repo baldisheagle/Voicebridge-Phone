@@ -29,29 +29,55 @@ export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickn
 // Delete phone number using Retell's Delete Phone Number API
 export const deleteRetellPhoneNumber = async (number) => {
     console.log('Deleting Phone Number');
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellPhoneNumber', {
+    try {
+        
+        let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellPhoneNumber', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json'
+        },
+            body: JSON.stringify({
+                phoneNumber: number
+            })
+        })
+
+        if (res.status !== 200) {
+            return false;
+        } else {
+            return true;
+        }
+        
+    } catch (error) {
+        console.error('Error deleting phone number', error);
+        return false;
+    }
+}
+
+// Buy phone number using Retell's Create Phone Number API
+export const buyRetellPhoneNumber = async (areaCode, nickname) => {
+    console.log('Buying Phone Number', areaCode, nickname);
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/buyRetellPhoneNumber', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            phoneNumber: number
+            areaCode: areaCode,
+            nickname: nickname
         })
     }).catch(err => {
-        console.error('Error deleting phone number', err);
+        console.error('Error buying phone number', err);
         return false;
     });
 
     if (res.status !== 200) {
+        console.log('buy phone number error', res);
         return false;
     } else {
-        return true;
+        let data = await res.json();
+        console.log('buy phone number', data);
+        return data;
     }
-}
-
-// Buy phone number using Retell's Create Phone Number API
-export const buyRetellPhoneNumber = async (phoneNumber) => {
-    console.log('Buying Phone Number');
 }
 
 // Create Business Info from businessInfo object
