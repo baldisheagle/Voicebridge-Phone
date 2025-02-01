@@ -26,6 +26,9 @@ export const BASIC_PHONE_RECEPTIONIST_TEMPLATE = {
         website: "",
         location: "",
         phoneNumber: "",
+        services: "",
+        insuranceAccepted: "",
+        email: "",
     },
 };
 

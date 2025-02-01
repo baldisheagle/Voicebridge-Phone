@@ -8,6 +8,8 @@ import { Button, Spinner, Text, TextField, TextArea, Select, Switch, Badge } fro
 import toast, { Toaster } from 'react-hot-toast';
 import { TIMEZONE_OFFSETS, HOURS } from '../../config/retellagents.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
+import { updateRetellLlmAndAgent } from '../../utilities/retell.js';
+import { validateEmail } from '../../helpers/string.js';
 
 export default function BusinessInfo({ agent }) { 
 
@@ -24,6 +26,9 @@ export default function BusinessInfo({ agent }) {
   const [phoneNumber, setPhoneNumber] = useState(agent.businessInfo.phoneNumber || '');
   const [timezone, setTimezone] = useState(agent.businessInfo.timezone);
   const [businessHours, setBusinessHours] = useState(agent.businessInfo.businessHours);
+  const [services, setServices] = useState(agent.businessInfo.services || '');
+  const [insuranceAccepted, setInsuranceAccepted] = useState(agent.businessInfo.insuranceAccepted || '');
+  const [email, setEmail] = useState(agent.businessInfo.email || '');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +44,18 @@ export default function BusinessInfo({ agent }) {
 
   // Save business profile
   const saveBusinessInfo = async () => {
+
+    if (name.length === 0) {
+      toast.error('Business name is required');
+      return;
+    }
+
+    // Check if email is valid
+    if (email.length > 0 && !validateEmail(email)) {
+      toast.error('Invalid email');
+      return;
+    }
+
     let _agent = {
       ...agent,
       businessInfo: {
@@ -49,11 +66,16 @@ export default function BusinessInfo({ agent }) {
         phoneNumber: phoneNumber,
         timezone: timezone,
         businessHours: businessHours,
+        services: services,
+        insuranceAccepted: insuranceAccepted,
+        email: email
       }
     }
 
     let res = await dbUpdateAgent(_agent);
     if (res) {
+      // Update Retell LLM and Agent
+      await updateRetellLlmAndAgent(_agent);
       toast.success('Business profile updated');
     } else {
       toast.error('Error updating business profile');
@@ -129,6 +151,17 @@ export default function BusinessInfo({ agent }) {
         </Col>
       </Row>
 
+            {/* Email */}
+            <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Email</Text>
+          <Text size="1" as='div' color='gray'>The email of your business.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <TextField.Root variant="surface" placeholder="example@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </Col>
+      </Row>
+
       {/* Timezone */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
@@ -144,6 +177,28 @@ export default function BusinessInfo({ agent }) {
               ))}
             </Select.Content>
           </Select.Root>
+        </Col>
+      </Row>
+
+      {/* Services */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Services</Text>
+          <Text size="1" as='div' color='gray'>The services offered by your business.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <TextArea variant="surface" rows={3} maxLength={1000} value={services} onChange={(e) => setServices(e.target.value)} />
+        </Col>
+      </Row>
+
+      {/* Insurance accepted */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Insurance accepted</Text>
+          <Text size="1" as='div' color='gray'>The insurance accepted by your business.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <TextArea variant="surface" rows={3} maxLength={1000} value={insuranceAccepted} onChange={(e) => setInsuranceAccepted(e.target.value)} />
         </Col>
       </Row>
 

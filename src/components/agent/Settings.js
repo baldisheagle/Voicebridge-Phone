@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { LANGUAGES, VOICES } from '../../config/retellagents.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
 import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
+import { connectRetellPhoneNumberToAgent, updateRetellLlmAndAgent } from '../../utilities/retell.js';
 
 export default function CallSettings({ agent }) {
 
@@ -57,10 +58,29 @@ export default function CallSettings({ agent }) {
       includeDisclaimer: includeDisclaimer
     }
 
-    let res = await dbUpdateAgent(_agent);
-    if (res) {
-      toast.success('Call settings updated');
-    } else {
+    try {
+
+      let res = await dbUpdateAgent(_agent);
+
+      if (res) {
+        // Link phone number to agent, if not null
+        if (agentPhoneNumber) {
+          let phoneNumber = phoneNumbers.find(p => p.id === agentPhoneNumber);
+          if (phoneNumber) {
+            // Connect phone number to agent
+            console.log('Connecting phone number to agent', phoneNumber.number, agent.retellAgentId);
+            await connectRetellPhoneNumberToAgent(agent.retellAgentId, phoneNumber.number);
+          }
+        }
+        // Update Retell LLM and Agent
+        await updateRetellLlmAndAgent(_agent);
+        toast.success('Call settings updated');
+
+      } else {
+        toast.error('Error updating call settings');
+      }
+
+    } catch (error) {
       toast.error('Error updating call settings');
     }
   }

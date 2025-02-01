@@ -59,7 +59,7 @@ const corsMiddleware = cors(corsOptions);
 */
 
 exports.retellCallWebhook = onRequest((req, res) => {
-  console.log('Retell call webhook', req.body);
+  console.log('Retell call webhook');
   
   // TODO: Add signature verification
   // if (
@@ -113,8 +113,6 @@ async function saveCallToDatabase(call) {
     console.error('No agent_id found for call', call.call_id);
     return;
   }
-  
-  console.log('Agent ID found for call', call.agent_id);
 
   const agents = await db.collection('agents').where('retellAgentId', '==', call.agent_id).limit(1).get();
   
@@ -124,8 +122,6 @@ async function saveCallToDatabase(call) {
   }
   
   const workspaceId = agents.docs[0].data().workspaceId;
-  
-  console.log('Workspace found for agent', call.agent_id, workspaceId);
 
   // Save call to database
   const callId = uuidv4();
@@ -152,7 +148,9 @@ async function saveCallToDatabase(call) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+
   return;
+
 }
 
 /*
@@ -167,36 +165,41 @@ exports.createRetellAgent = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
     if (req && req.headers) {
-      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer) {
+
+      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode) {
         
-        console.log('Creating Retell Agent', req.body);
+        console.log('Creating Retell Agent');
 
         // Create client
         const client = new Retell({
           apiKey: process.env.REACT_APP_RETELL_API_KEY,
         });
 
-        // Create LLM - TODO: Add more templates
-        let llm = req.body.template === 'basic-phone-receptionist' ? JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM)) : JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+        // Create LLM
+        let llm = null;
+        switch (req.body.template) {
+          case 'basic-phone-receptionist':
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+            break;
+          default:
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+        }
 
-        // Replace variables in model
+        // Replace llm model
         llm.model = req.body.model;
         
         // Replace variables in begin_message
         llm.begin_message = llm.begin_message.replaceAll('[[AGENT_NAME]]', req.body.agentName);
-        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessInfo.name);
+        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
         llm.begin_message = llm.begin_message.replaceAll('[[INCLUDE_DISCLAIMER]]', req.body.includeDisclaimer ? 'If this is an emergency, please hang up and dial Nine-One-One.' : '');
+        
         // Replace variables in general_prompt
         llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
-        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessInfo.name);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
-
-        console.log('LLM', llm);
 
         // Create LLM
         const retellLlm = await client.llm.create(llm);
-
-        console.log('Retell LLM created', retellLlm);
 
         if (!retellLlm) {
           console.error('Error creating Retell LLM', retellLlm);
@@ -205,14 +208,19 @@ exports.createRetellAgent = onRequest((req, res) => {
         }
 
         // Create Agent
-        let agent = req.body.template === 'basic-phone-receptionist' ? JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT)) : JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_INBOUND_AGENT));
+        let agent = null;
+        switch (req.body.template) {
+          case 'basic-phone-receptionist':
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
+            break;
+          default:
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
+        }
 
         agent.response_engine.llm_id = retellLlm.llm_id;
-        agent.agent_name = req.body.agentName;
+        agent.agent_name = req.body.retellAgentCode;
         agent.voice_id = req.body.voiceId;
         agent.language = req.body.language;
-
-        console.log('Agent', agent);
 
         // Create Agent
         const retellAgent = await client.agent.create(agent);
@@ -223,8 +231,6 @@ exports.createRetellAgent = onRequest((req, res) => {
           return;
         }
 
-        console.log('Retell Agent created', retellAgent);
-
         // Save agent to database
         const dbAgents = await db.collection('agents').where('id', '==', req.body.agentId).limit(1).get();
 
@@ -234,7 +240,6 @@ exports.createRetellAgent = onRequest((req, res) => {
             retellAgentId: retellAgent.agent_id,
             updatedAt: new Date().toISOString(),
           });
-          console.log('Agent updated with Retell LLM and Agent', dbAgents.docs[0].data());
           res.status(200).send(JSON.stringify({ retell_llm_id: retellLlm.llm_id, retell_agent_id: retellAgent.agent_id }));
           return;
 
@@ -272,7 +277,7 @@ exports.deleteRetellAgent = onRequest((req, res) => {
 
     if (req && req.headers) {
       if (req.body && req.body.retellLlmId && req.body.retellAgentId) {
-        console.log('Deleting Retell Agent', req.body);
+        console.log('Deleting Retell Agent');
 
         // Create client
         const client = new Retell({
@@ -285,7 +290,6 @@ exports.deleteRetellAgent = onRequest((req, res) => {
         // Delete Agent
         await client.agent.delete(req.body.retellAgentId);
 
-        console.log('Retell Agent deleted', req.body.retellAgentId);
         res.status(200).send(JSON.stringify({ message: "Retell Agent deleted" }));
         return;
 
@@ -303,6 +307,251 @@ exports.deleteRetellAgent = onRequest((req, res) => {
   });
 
 });
+
+/*
+  Function: Update Retell Agent
+  Parameters:
+    retellAgentId
+    agent
+  Return:
+    null
+*/
+
+exports.updateRetellLlmAndAgent = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+
+      console.log('Updating Retell LLM and Agent');
+
+      if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode && req.body.retellLlmId && req.body.retellAgentId) {
+        
+        console.log('Updating Retell Agent');
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Create LLM - TODO: Add more templates
+        let llm = null;
+        switch (req.body.template) {
+          case 'basic-phone-receptionist':
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+            break;
+          default:
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+        }
+
+        // Replace variables in model
+        llm.model = req.body.model;
+        
+        // Replace variables in begin_message
+        llm.begin_message = llm.begin_message.replaceAll('[[AGENT_NAME]]', req.body.agentName);
+        llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.begin_message = llm.begin_message.replaceAll('[[INCLUDE_DISCLAIMER]]', req.body.includeDisclaimer ? 'If this is an emergency, please hang up and dial Nine-One-One.' : '');
+        
+        // Replace variables in general_prompt
+        llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', req.body.agentName);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+        llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
+
+        // Create LLM
+        const retellLlm = await client.llm.update(req.body.retellLlmId, llm);
+
+        console.log('Retell LLM created', retellLlm);
+
+        if (!retellLlm) {
+          console.error('Error creating Retell LLM', retellLlm);
+          res.status(500).send(JSON.stringify({ error: "Error creating Retell LLM" }));
+          return;
+        }
+
+        // Update Agent
+        let agent = null;
+        switch (req.body.template) {
+          case 'basic-phone-receptionist':
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
+            break;
+          default:
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
+        }
+
+        agent.agent_name = req.body.retellAgentCode;
+        agent.voice_id = req.body.voiceId;
+        agent.language = req.body.language;
+        agent.response_engine.llm_id = req.body.retellLlmId;
+
+        // Create Agent
+        const retellAgent = await client.agent.update(req.body.retellAgentId, agent);
+
+        if (!retellAgent) {
+          console.error('Error updating Retell Agent', retellAgent);
+          res.status(500).send(JSON.stringify({ error: "Error updating Retell Agent" }));
+          return;
+        }
+        
+        res.status(200).send(JSON.stringify({ message: "Retell Agent updated" }));
+        return;
+
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+  });
+
+});
+
+/*
+  Function: Import Retell Phone Number
+  Parameters:
+    phonenumber
+    terminationuri
+    nickname
+  Return:
+    null
+*/
+
+exports.importRetellPhoneNumber = onRequest((req, res) => {
+
+  console.log('Importing Retell Phone Number', req.body);
+  
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+      if (req.body && req.body.phoneNumber && req.body.terminationUri && req.body.nickname) {
+        console.log('Importing Retell Phone Number');
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Import Phone Number
+        let phoneNumber = await client.phoneNumber.import({
+          phone_number: req.body.phoneNumber,
+          termination_uri: req.body.terminationUri,
+          nickname: req.body.nickname,
+        });
+
+        console.log('Retell Phone Number imported', phoneNumber);
+        res.status(200).send(JSON.stringify({ message: "Retell Phone Number imported" }));
+        return;
+
+      } else {
+        console.error('Missing parameters');
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+
+  });
+});
+
+/*
+  Function: Delete Retell Phone Number
+  Parameters:
+    phoneNumber
+  Return:
+    null
+*/
+
+exports.deleteRetellPhoneNumber = onRequest((req, res) => {
+
+  console.log('Deleting Retell Phone Number', req.body);
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+      if (req.body && req.body.phoneNumber) {
+        console.log('Deleting Retell Phone Number');
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Delete Phone Number
+        await client.phoneNumber.delete(req.body.phoneNumber);
+
+        console.log('Retell Phone Number deleted', req.body.phoneNumber);
+        res.status(200).send(JSON.stringify({ message: "Retell Phone Number deleted" }));
+        return;
+        
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+
+  });
+
+});
+
+/*
+  Function: Connect Retell Phone Number to Agent
+  Parameters:
+    retellAgentId
+    phoneNumber
+  Return:
+    null
+*/
+
+exports.connectRetellPhoneNumberToAgent = onRequest((req, res) => {
+
+  console.log('Connecting Retell Phone Number to Agent');
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+      if (req.body && req.body.retellAgentId && req.body.phoneNumber) {
+        console.log('Connecting Retell Phone Number to Agent', req.body);
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Connect Phone Number to Agent
+        await client.phoneNumber.update( req.body.phoneNumber, {
+          inbound_agent_id: req.body.retellAgentId,
+        });
+
+        console.log('Retell Phone Number connected to Agent', req.body.retellAgentId, req.body.phoneNumber);
+        res.status(200).send(JSON.stringify({ message: "Retell Phone Number connected to Agent" }));
+        return;
+        
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+
+  });
+
+});
+
 
 /*
   Function: Get access token from Epic

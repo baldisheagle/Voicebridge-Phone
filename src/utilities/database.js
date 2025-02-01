@@ -57,6 +57,34 @@ export const dbUpdatePhoneNumber = async(_phoneNumber) => {
   }
 }
 
+// Add phone number
+export const dbAddPhoneNumber = async(_phoneNumber) => {
+  try {
+    const docRef = await addDoc(collection(db, "phonenumbers"), _phoneNumber);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding phone number:", error);
+    return false;
+  }
+}
+
+// Delete phone number
+export const dbDeletePhoneNumber = async(phoneNumberId, workspaceId) => {
+  console.log('Deleting phone number', phoneNumberId);
+  try {
+    const snapshot = await getDocs(query(collection(db, "phonenumbers"), where("id", "==", phoneNumberId), where("workspaceId", "==", workspaceId), limit(1)));
+    if (snapshot.empty) {
+      return false;
+    }
+    const docRef = doc(db, snapshot.docs[0].ref.path);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting phone number:", error);
+    return false;
+  }
+}
+
 // Get calendars
 export const dbGetCalendars = async(workspaceId) => {
   try {

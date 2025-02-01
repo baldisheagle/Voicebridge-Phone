@@ -58,8 +58,10 @@ export default function Agents() {
 
         // Create an agent in database
         let agentId = uuidv4();
+        let retellAgentCode = uuidv4();
         let _agent = {
           id: agentId,
+          retellAgentCode: retellAgentCode,
           template: template,
           name: 'Basic Phone Receptionist',
           icon: BASIC_PHONE_RECEPTIONIST_TEMPLATE.icon,
@@ -148,7 +150,7 @@ export default function Agents() {
         {agents.length > 0 && (
           <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 20, marginBottom: 20 }}>
             {agents.map((agent, index) => (
-              <Col key={index} xs={12} sm={6} md={6} lg={4}>
+              <Col key={index} xs={12} sm={6} md={6} lg={6}>
                 <Card>
                   <Row style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, height: 180 }}>
                     <div style={{ width: '100%' }}>
@@ -169,8 +171,8 @@ export default function Agents() {
                       </Row>
 
                       <Text size="3" as="div" weight="bold" style={{ marginTop: 10, cursor: 'pointer' }} onClick={() => navigate(`/agent/${agent.id}`)}>{agent.name}</Text>
-                      <Text size="2" as="div" color='gray' style={{ marginTop: 0 }}>{agent.agentName ? agent.agentName : 'No agent name'}</Text>
-                      <Text size="2" as="div" color='gray' style={{ marginTop: 0 }}>{agent.phoneNumber && phoneNumbers.find(p => p.id === agent.phoneNumber) ? formatPhoneNumber(phoneNumbers.find(p => p.id === agent.phoneNumber).number) : 'No phone number'}</Text>
+                      <Text size="2" as="div" color='gray' style={{ marginTop: 5 }}>{agent.agentName ? agent.agentName : 'No agent name'}</Text>
+                      <Text size="2" as="div" color='gray' style={{ marginTop: 5 }}>{agent.phoneNumber && phoneNumbers.find(p => p.id === agent.phoneNumber) ? formatPhoneNumber(phoneNumbers.find(p => p.id === agent.phoneNumber).number) : 'No phone number'}</Text>
                     </div>
                   </Row>
                   <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 0 }}>

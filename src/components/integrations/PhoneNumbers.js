@@ -4,11 +4,14 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { useMediaQuery } from '../../shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "../../Theme.js";
-import { Button, DropdownMenu, Card, Spinner, Text, Dialog, TextField, VisuallyHidden } from '@radix-ui/themes';
+import { Button, DropdownMenu, Card, Spinner, Text, Dialog, TextField, VisuallyHidden, AlertDialog } from '@radix-ui/themes';
+import { v4 as uuidv4 } from 'uuid';
 import toast, { Toaster } from 'react-hot-toast';
-import { ArrowsLeftRight, CreditCard, Plus, Pencil, Phone } from '@phosphor-icons/react';
-import { dbGetPhoneNumbers, dbUpdatePhoneNumber } from '../../utilities/database.js';
+import { ArrowsLeftRight, CreditCard, Plus, Pencil, Phone, Trash } from '@phosphor-icons/react';
+import { dbDeletePhoneNumber, dbGetAgents, dbGetPhoneNumbers, dbUpdatePhoneNumber } from '../../utilities/database.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
+import { importRetellPhoneNumber, deleteRetellPhoneNumber } from '../../utilities/retell.js';
+import { dbAddPhoneNumber } from '../../utilities/database.js';
 
 export default function PhoneNumbers() {
 
@@ -19,6 +22,12 @@ export default function PhoneNumbers() {
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [phoneNumbers, setPhoneNumbers] = useState([]);
+
+  const [importNumberDialogOpen, setImportNumberDialogOpen] = useState(false);
+  const [importPhoneNumber, setImportPhoneNumber] = useState('');
+  const [importTerminationUri, setImportTerminationUri] = useState('');
+  const [importNickname, setImportNickname] = useState('');
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,6 +59,55 @@ export default function PhoneNumbers() {
     }
   }
 
+  // Import phone number
+  const importPhoneNumberToRetell = async () => {
+    console.log('Importing phone number', importPhoneNumber, importTerminationUri, importNickname);
+
+    // Validate phone number format
+    if (!importPhoneNumber.match(/^\+1\d{10}$/)) {
+      toast.error('Phone number must be in format +14153456789');
+      return;
+    }
+
+    let success = await importRetellPhoneNumber(importPhoneNumber, importTerminationUri, importNickname);
+    
+    if (success) {
+      setImportNumberDialogOpen(false);
+      setImportPhoneNumber('');
+      setImportTerminationUri('');
+      setImportNickname('');
+      // Add phone number to phone numbers database
+      let uuid = uuidv4();
+      let phoneNumber = {
+        id: uuid,
+        name: importNickname,
+        number: importPhoneNumber,
+        type: 'imported',
+        terminationUri: importTerminationUri,
+        workspaceId: auth.workspace.id,
+        createdBy: auth.user.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      let res = await dbAddPhoneNumber(phoneNumber);
+      if (res) {
+        let _phoneNumbers = phoneNumbers.push(phoneNumber);
+        setPhoneNumbers(_phoneNumbers);
+        toast.success('Phone number imported');
+      } else {
+        toast.error('Error importing phone number');
+      }
+    } else {
+      toast.error('Error importing phone number');
+    }
+  }
+
+  // Delete phone number
+  const onDeletePhoneNumber = async (id) => {
+    let _phoneNumbers = phoneNumbers.filter(p => p.id !== id);
+    setPhoneNumbers(_phoneNumbers);
+  }
+
   // Number component
   const Number = ({ number, updatePhoneNumberName }) => {
 
@@ -58,6 +116,29 @@ export default function PhoneNumbers() {
     useEffect(() => {
       setName(number.name);
     }, [number]);
+
+    const deleteNumber = async () => {
+
+      console.log('Deleting number', number.id);
+      
+      // Check if number if associated with an agent
+      let agents = await dbGetAgents(auth.workspace.id);
+      let agent = agents.find(a => a.phoneNumberId === number.id);
+      if (agent) {
+        toast.error('Phone number is associated with an agent');
+        return;
+      }
+      
+      let success = await dbDeletePhoneNumber(number.id, auth.workspace.id);
+      if (success) {
+        await deleteRetellPhoneNumber(number.number);
+        toast.success('Phone number deleted');
+        onDeletePhoneNumber(number.id);
+      } else {
+        toast.error('Error deleting phone number');
+      }
+
+    }
 
     return (
       <Card>
@@ -96,6 +177,26 @@ export default function PhoneNumbers() {
                   </Row>
                 </Dialog.Content>
               </Dialog.Root>
+              {/* Delete number */}
+              <AlertDialog.Root>
+                <AlertDialog.Trigger>
+                  <Button variant="ghost" color="red"><Trash weight="bold" size={16} /></Button>
+                </AlertDialog.Trigger>
+                <AlertDialog.Content>
+                  <AlertDialog.Title>Delete {number.number}</AlertDialog.Title>
+                  <AlertDialog.Description>
+                    Are you sure you want to delete this phone number? This action cannot be undone.
+                  </AlertDialog.Description>
+                  <Row style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+                    <AlertDialog.Cancel>
+                      <Button variant="soft" color="gray">Cancel</Button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action>
+                      <Button variant="solid" color="red" onClick={deleteNumber}>Delete</Button>
+                    </AlertDialog.Action>
+                  </Row>
+                </AlertDialog.Content>
+              </AlertDialog.Root>
             </Row>
           </div>
         </Row>
@@ -126,7 +227,7 @@ export default function PhoneNumbers() {
               <Button variant="solid"><Plus /> New number</Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
-              <DropdownMenu.Item><ArrowsLeftRight /> Connect a number via SIP Trunk</DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => setImportNumberDialogOpen(true)}><ArrowsLeftRight /> Import a number</DropdownMenu.Item>
               <DropdownMenu.Item><CreditCard /> Buy a number</DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
@@ -139,12 +240,49 @@ export default function PhoneNumbers() {
           <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 20, marginBottom: 20 }}>
             {phoneNumbers.map((phoneNumber, index) => (
               <Col key={index} xs={12} sm={6} md={4} lg={4}>
-                <Number number={phoneNumber} updatePhoneNumberName={updatePhoneNumberName} />
+                <Number number={phoneNumber} updatePhoneNumberName={updatePhoneNumberName} onDeletePhoneNumber={onDeletePhoneNumber} />
               </Col>
             ))}
           </Row>
         )}
       </div>
+
+      <Dialog.Root open={importNumberDialogOpen} onOpenChange={setImportNumberDialogOpen}>
+        <Dialog.Content>
+          <Dialog.Title>Import number</Dialog.Title>
+          <VisuallyHidden>
+            <Dialog.Description>Import a number using SIP Trunking. Enter the phone number you want to import, the termination URI, and a nickname for the number.</Dialog.Description>
+          </VisuallyHidden>
+
+          <Text size="1" color='gray' as="div" style={{ marginTop: 10 }}>Import a number using SIP Trunking. Enter the phone number you want to import, the termination URI, and a nickname for the number.</Text>
+
+          <Text size="2" as="div" style={{ marginTop: 10 }}>Phone number</Text>
+          <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the phone number you want to import in the format +14154567890. Only US numbers are supported at this time.</Text>
+          <TextField.Root variant="outline" placeholder="+14154567890" value={importPhoneNumber} style={{ marginTop: 5 }} onChange={(e) => setImportPhoneNumber(e.target.value)} />
+
+          <Text size="2" as="div" style={{ marginTop: 20 }}>Termination URI</Text>
+          <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the termination URI for the phone number you want to import. The termination uri to uniquely identify your elastic SIP trunk. For Twilio elastic SIP trunks it always end with ".pstn.twilio.com".</Text>
+          <TextField.Root variant="outline" placeholder="example.pstn.twilio.com" value={importTerminationUri} style={{ marginTop: 5 }} onChange={(e) => setImportTerminationUri(e.target.value)} />
+
+          <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
+          <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
+          <TextField.Root variant="outline" placeholder="My new number" value={importNickname} style={{ marginTop: 5 }} onChange={(e) => setImportNickname(e.target.value)} />
+
+          <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
+            <Dialog.Close>
+              <Button variant="soft" color="gray">
+                Cancel
+              </Button>
+            </Dialog.Close>
+            <Dialog.Close>
+              <Button variant="solid" onClick={() => importPhoneNumberToRetell()} disabled={importPhoneNumber.length !== 12 || importTerminationUri.length === 0 || importNickname.length === 0}>
+                Save
+              </Button>
+            </Dialog.Close>
+          </Row>
+
+        </Dialog.Content>
+      </Dialog.Root>
 
       <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
     </div>
