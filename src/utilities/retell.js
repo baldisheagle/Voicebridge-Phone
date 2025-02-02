@@ -1,5 +1,7 @@
 // Retell API
 
+import { TIMEZONE_OFFSETS } from "../config/retellagents";
+
 
 // Import phone number using Retell's Import Phone Number API
 export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickname) => {
@@ -55,7 +57,9 @@ export const deleteRetellPhoneNumber = async (number) => {
 
 // Buy phone number using Retell's Create Phone Number API
 export const buyRetellPhoneNumber = async (areaCode, nickname) => {
-    console.log('Buying Phone Number', areaCode, nickname);
+
+    // console.log('Buying Phone Number', areaCode, nickname);
+    
     let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/buyRetellPhoneNumber', {
         method: 'POST',
         headers: {
@@ -144,18 +148,18 @@ const createBusinessInfo = (businessInfo) => {
 const createFAQ = (faq) => {
 
     let knowledge = '';
-    if (faq.length > 0) {
+
+    if (faq && faq.length > 0) {
         knowledge += `Frequently-asked questions:\n`;
         faq.forEach(question => {
             knowledge += `Question: ${question.question}\n`;
             knowledge += `Answer: ${question.answer}\n`;
         });
-    }
-    if (knowledge === '') {
-        return null;
     } else {
-        return knowledge;
+        knowledge = " ";
     }
+
+    return knowledge;
 }
 
 // Create Retell Agent
@@ -176,7 +180,10 @@ export const createRetellAgent = async (agent) => {
             model: agent.model,
             voiceId: agent.voiceId,
             language: agent.language,
-            includeDisclaimer: agent.includeDisclaimer
+            includeDisclaimer: agent.includeDisclaimer,
+            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
+            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
+            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
         })
     }).catch(err => {
         console.error('Error creating Retell Agent', err);
@@ -236,7 +243,10 @@ export const updateRetellLlmAndAgent = async (agent) => {
             model: agent.model,
             voiceId: agent.voiceId,
             language: agent.language,
-            includeDisclaimer: agent.includeDisclaimer
+            includeDisclaimer: agent.includeDisclaimer,
+            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
+            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
+            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
         })
     }).catch(err => {
         console.error('Error updating Retell LLM and Agent', err);

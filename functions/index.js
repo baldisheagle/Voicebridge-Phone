@@ -34,7 +34,9 @@ const allowedOrigins = ['https://voicebridge-app.web.app', 'https://app.voicebri
 // Import constants
 const { 
   RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM, 
-  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT
+  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT,
+  RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_LLM,
+  RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_AGENT,
 } = require('./templates');
 
 // Cors options
@@ -168,7 +170,7 @@ exports.createRetellAgent = onRequest((req, res) => {
 
       if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.faq && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode) {
         
-        console.log('Creating Retell Agent');
+        console.log('Creating Retell Agent', req.body);
 
         // Create client
         const client = new Retell({
@@ -180,6 +182,9 @@ exports.createRetellAgent = onRequest((req, res) => {
         switch (req.body.template) {
           case 'basic-phone-receptionist':
             llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+            break;
+          case 'phone-receptionist-with-cal-com':
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_LLM));
             break;
           default:
             llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
@@ -199,6 +204,25 @@ exports.createRetellAgent = onRequest((req, res) => {
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
         llm.general_prompt = llm.general_prompt.replaceAll('[[FAQ]]', req.body.faq);
 
+        // Replace variables in general_tools
+        llm.general_tools = llm.general_tools.map(tool => {
+          if (tool.cal_api_key) {
+            tool.cal_api_key = tool.cal_api_key.replaceAll('[[CAL_API_KEY]]', req.body.calApiKey);
+          }
+          if (tool.event_type_id) {
+            tool.event_type_id = parseInt(tool.event_type_id.replaceAll('[[CAL_EVENT_TYPE_ID]]', req.body.calEventTypeId));
+          }
+          if (tool.description) {
+            tool.description = tool.description.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+          }
+          if (tool.timezone) {
+            tool.timezone = tool.timezone.replaceAll('[[TIMEZONE]]', req.body.timezone);
+          }
+          return tool;
+        });
+
+        // console.log('LLM', llm);
+
         // Create LLM
         const retellLlm = await client.llm.create(llm);
 
@@ -213,6 +237,9 @@ exports.createRetellAgent = onRequest((req, res) => {
         switch (req.body.template) {
           case 'basic-phone-receptionist':
             agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
+            break;
+          case 'phone-receptionist-with-cal-com':
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_AGENT));
             break;
           default:
             agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
@@ -327,8 +354,6 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
       console.log('Updating Retell LLM and Agent');
 
       if (req.body && req.body.template && req.body.agentId && req.body.agentName && req.body.businessName && req.body.businessInfo && req.body.faq && req.body.model && req.body.voiceId && req.body.language && req.body.includeDisclaimer && req.body.retellAgentCode && req.body.retellLlmId && req.body.retellAgentId) {
-        
-        console.log('Updating Retell Agent');
 
         // Create client
         const client = new Retell({
@@ -340,6 +365,9 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
         switch (req.body.template) {
           case 'basic-phone-receptionist':
             llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
+            break;
+          case 'phone-receptionist-with-cal-com':
+            llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_LLM));
             break;
           default:
             llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM));
@@ -359,7 +387,26 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
         llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', req.body.businessInfo);
         llm.general_prompt = llm.general_prompt.replaceAll('[[FAQ]]', req.body.faq);
 
-        // Create LLM
+        // Replace variables in general_tools
+        llm.general_tools = llm.general_tools.map(tool => {
+          if (tool.cal_api_key) {
+            tool.cal_api_key = tool.cal_api_key.replaceAll('[[CAL_API_KEY]]', req.body.calApiKey);
+          }
+          if (tool.event_type_id) {
+            tool.event_type_id = parseInt(tool.event_type_id.replaceAll('[[CAL_EVENT_TYPE_ID]]', req.body.calEventTypeId));
+          }
+          if (tool.description) {
+            tool.description = tool.description.replaceAll('[[BUSINESS_NAME]]', req.body.businessName);
+          }
+          if (tool.timezone) {
+            tool.timezone = tool.timezone.replaceAll('[[TIMEZONE]]', req.body.timezone);
+          }
+          return tool;
+        });
+
+        console.log('LLM', llm);
+
+        // Update LLM
         const retellLlm = await client.llm.update(req.body.retellLlmId, llm);
 
         console.log('Retell LLM updated');
@@ -376,10 +423,14 @@ exports.updateRetellLlmAndAgent = onRequest((req, res) => {
           case 'basic-phone-receptionist':
             agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
             break;
+          case 'phone-receptionist-with-cal-com':
+            agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_AGENT));
+            break;
           default:
             agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT));
         }
 
+        // Update agent's dynamic properties
         agent.agent_name = req.body.retellAgentCode;
         agent.voice_id = req.body.voiceId;
         agent.language = req.body.language;

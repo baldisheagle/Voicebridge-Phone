@@ -218,9 +218,6 @@ export default function FAQ({ agent }) {
       {/* FAQ */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
         <Col xs={12} sm={12} md={12} lg={9} xl={7} style={{ padding: 10 }}>
-          {faq.length === 0 && (
-            <Text size="2" color="gray">No questions</Text>
-          )}
           {faq.length > 0 && (
             <div style={{ marginTop: 20, width: '100%' }}>
               {faq.map((faq, index) => (

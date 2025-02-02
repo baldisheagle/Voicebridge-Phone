@@ -17,6 +17,8 @@ export default function CallSettings({ agent }) {
   const [voiceId, setVoiceId] = useState(agent.voiceId);
   const [includeDisclaimer, setIncludeDisclaimer] = useState(agent.includeDisclaimer);
   const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber);
+  const [calEventTypeId, setCalEventTypeId] = useState(agent.calCom ? agent.calCom.eventId : null);
+  const [calApiKey, setCalApiKey] = useState(agent.calCom ? agent.calCom.apiKey : null);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ export default function CallSettings({ agent }) {
   }
 
   const saveCallSettings = async () => {
-    
+
     // If the number if not null, make sure the phone number is not connected to another agent that is not this one
     if (agentPhoneNumber) {
       let a = agents.find(a => a.phoneNumber === agentPhoneNumber && a.id !== agent.id);
@@ -55,10 +57,16 @@ export default function CallSettings({ agent }) {
       agentName: agentName,
       voiceId: voiceId,
       phoneNumber: agentPhoneNumber,
-      includeDisclaimer: includeDisclaimer
+      includeDisclaimer: includeDisclaimer,
+      calCom: {
+        eventId: calEventTypeId ? parseInt(calEventTypeId) : null,
+        apiKey: calApiKey ? calApiKey : null
+      }
     }
 
     try {
+
+      // console.log('Updating agent', _agent);
 
       let res = await dbUpdateAgent(_agent);
 

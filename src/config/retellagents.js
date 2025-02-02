@@ -3,8 +3,9 @@
 // Defaults for Basic Phone Receptionist
 export const BASIC_PHONE_RECEPTIONIST_TEMPLATE = {
     id: "basic-phone-receptionist",
+    title: "Basic Phone Receptionist",
     name: "Sally",
-    description: "Create a basic new phone receptionist that answers calls, responds to routine questions, and summarizes caller's intent for proper and timely follow up.",
+    description: "A basic receptionist agent that answers caller questions, takes messages, and notes appointment requests.",
     includeDisclaimer: true,
     voiceId: "11labs-Myra",
     language: "en-US",
@@ -32,9 +33,44 @@ export const BASIC_PHONE_RECEPTIONIST_TEMPLATE = {
     },
 };
 
+export const PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE = {
+    id: "phone-receptionist-with-cal-com",
+    title: "Phone Receptionist with Cal.com scheduling",
+    description: "A phone receptionist agent that answers caller questions, takes messages, and uses Cal.com for scheduling appointments.",
+    icon: '/assets/agents/phone-receptionist-with-cal-com.svg',
+    name: "Ken",
+    voiceId: "11labs-Adrian",
+    language: "en-US",
+    model: "gpt-4o",
+    includeDisclaimer: true,
+    calCom: {
+        apiKey: "API Key",
+        eventId: 1234567,
+    },
+    businessInfo: {
+        name: "Clinic",
+        timezone: -8,
+        businessHours: {
+            monday: { id: 'monday', value: 'monday', label: 'Monday', isOpen: true, open: '09:00', close: '17:00' },
+            tuesday: { id: 'tuesday', value: 'tuesday', label: 'Tuesday', isOpen: true, open: '09:00', close: '17:00' },
+            wednesday: { id: 'wednesday', value: 'wednesday', label: 'Wednesday', isOpen: true, open: '09:00', close: '17:00' },
+            thursday: { id: 'thursday', value: 'thursday', label: 'Thursday', isOpen: true, open: '09:00', close: '17:00' },
+            friday: { id: 'friday', value: 'friday', label: 'Friday', isOpen: true, open: '09:00', close: '17:00' },
+            saturday: { id: 'saturday', value: 'saturday', label: 'Saturday', isOpen: false, open: '09:00', close: '17:00' },
+            sunday: { id: 'sunday', value: 'sunday', label: 'Sunday', isOpen: false, open: '09:00', close: '17:00' },
+        },
+        description: "",
+        website: "",
+        location: "",
+        phoneNumber: "",
+        services: "",
+        insuranceAccepted: "",
+    },
+};
+
 export const VOICES = [
-    { value: "11labs-Myra", label: "US Female" },
-    { value: "11labs-Adrian", label: "US Male" },
+    { value: "11labs-Myra", label: "American Female" },
+    { value: "11labs-Adrian", label: "American Male" },
 ];
 
 export const LANGUAGES = [

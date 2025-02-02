@@ -4,10 +4,10 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { useMediaQuery } from '../../shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "../../Theme.js";
-import { Button, DropdownMenu, Card, Spinner, Text, Dialog, TextField, VisuallyHidden, AlertDialog } from '@radix-ui/themes';
+import { Button, Card, Spinner, Text, Dialog, TextField, VisuallyHidden, AlertDialog, Callout } from '@radix-ui/themes';
 import { v4 as uuidv4 } from 'uuid';
 import toast, { Toaster } from 'react-hot-toast';
-import { ArrowsLeftRight, CreditCard, Plus, Pencil, Phone, Trash } from '@phosphor-icons/react';
+import { Plus, Pencil, Phone, Trash, Info } from '@phosphor-icons/react';
 import { dbDeletePhoneNumber, dbGetAgents, dbGetPhoneNumbers, dbUpdatePhoneNumber } from '../../utilities/database.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
 import { importRetellPhoneNumber, deleteRetellPhoneNumber, buyRetellPhoneNumber } from '../../utilities/retell.js';
@@ -296,16 +296,17 @@ export default function PhoneNumbers() {
           <Text size="1" color='gray'>{phoneNumbers.length} phone numbers</Text>
         </Col>
         <Col xs={6} sm={6} md={6} lg={6} xl={6} style={{ padding: 10, textAlign: 'right' }}>
-          <DropdownMenu.Root>
+          <Button variant="solid" onClick={() => setBuyNumberDialogOpen(true)}><Plus /> Buy New number</Button>
+          {/* TODO: Allow users to buy numbers only if they have a valid payment method on file */}
+          {/* <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="solid"><Plus /> New number</Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
               <DropdownMenu.Item onClick={() => setImportNumberDialogOpen(true)}><ArrowsLeftRight /> Import a number</DropdownMenu.Item>
-              {/* TODO: Allow users to buy numbers only if they have a valid payment method on file */}
               <DropdownMenu.Item onClick={() => setBuyNumberDialogOpen(true)}><CreditCard /> Buy a number</DropdownMenu.Item>
             </DropdownMenu.Content>
-          </DropdownMenu.Root>
+          </DropdownMenu.Root> */}
         </Col>
       </Row>
 
@@ -365,29 +366,38 @@ export default function PhoneNumbers() {
         <Dialog.Content>
           <Dialog.Title>Buy number</Dialog.Title>
           <VisuallyHidden>
-          <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
-        </VisuallyHidden>
+            <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
+          </VisuallyHidden>
 
-        <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
-        <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the area code you want to buy a number in (US only).</Text>
-        <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} />
+          <Callout.Root>
+            <Callout.Icon>
+              <Info weight="bold" />
+            </Callout.Icon>
+            <Callout.Text as="div">
+              Each number costs $10/month. You can cancel at any time.
+            </Callout.Text>
+          </Callout.Root>
 
-        <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
-        <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
-        <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
+          <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
+          <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the 3-digit area code you want to buy a number in (US only).</Text>
+          <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} />
 
-        <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
-          <Dialog.Close>
-            <Button variant="soft" color="gray">
-              Cancel
-            </Button>
-          </Dialog.Close>
-          <Dialog.Close>
-            <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberAreaCode.length !== 3 || buyNumberNickname.length === 0 || loading}>
-              Buy number
-            </Button>
-          </Dialog.Close>
-        </Row>
+          <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
+          <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
+          <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
+
+          <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
+            <Dialog.Close>
+              <Button variant="soft" color="gray">
+                Cancel
+              </Button>
+            </Dialog.Close>
+            <Dialog.Close>
+              <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberAreaCode.length !== 3 || buyNumberNickname.length === 0 || loading}>
+                Buy number
+              </Button>
+            </Dialog.Close>
+          </Row>
         
         </Dialog.Content>
 

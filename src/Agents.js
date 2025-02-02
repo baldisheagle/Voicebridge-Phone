@@ -4,12 +4,12 @@ import { useRequireAuth } from './use-require-auth.js';
 import { useMediaQuery } from './shared-functions.js';
 import { Row, Col, Image } from 'react-bootstrap';
 import { ThemeContext } from "./Theme.js";
-import { Heading, Spinner, Text, Button, DropdownMenu, Card, Dialog, TextField, Select, VisuallyHidden, IconButton } from '@radix-ui/themes';
+import { Heading, Spinner, Text, Button, DropdownMenu, Card, Dialog, VisuallyHidden, IconButton, Inset } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { UserCircleCheck, Plus, Trash, DotsThreeVertical } from '@phosphor-icons/react';
 import { dbGetAgents, dbGetPhoneNumbers, dbCreateAgent, dbDeleteAgent } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
-import { BASIC_PHONE_RECEPTIONIST_TEMPLATE } from './config/retellagents.js';
+import { BASIC_PHONE_RECEPTIONIST_TEMPLATE, PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE, TIMEZONE_OFFSETS } from './config/retellagents.js';
 import { v4 as uuidv4 } from 'uuid';
 import { createRetellAgent, deleteRetellAgent } from './utilities/retell.js';
 
@@ -50,6 +50,12 @@ export default function Agents() {
 
   const createAgentUsingTemplate = async(template) => {
     // console.log('Creating agent using template', template);
+
+    let agentId = uuidv4();
+    let retellAgentCode = uuidv4();
+    let _agent = null;
+    let res = null;
+
     switch (template) {
       
       case 'basic-phone-receptionist':
@@ -57,9 +63,7 @@ export default function Agents() {
       setLoading(true);
 
         // Create an agent in database
-        let agentId = uuidv4();
-        let retellAgentCode = uuidv4();
-        let _agent = {
+        _agent = {
           id: agentId,
           retellAgentCode: retellAgentCode,
           template: template,
@@ -78,7 +82,7 @@ export default function Agents() {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
-        let res = await dbCreateAgent(_agent);
+        res = await dbCreateAgent(_agent);
         if (res) {
           // Create an agent on Retell
           let retellRes = await createRetellAgent(_agent);
@@ -92,10 +96,59 @@ export default function Agents() {
         } else {
           toast.error('Error creating agent');
         }
-    
+
         setLoading(false);
 
         break;
+
+      case 'phone-receptionist-with-cal-com':
+
+        setLoading(true);
+
+        // Create an agent in database
+        _agent = {
+          id: agentId,
+          retellAgentCode: retellAgentCode,
+          template: template,
+          name: 'Phone Receptionist with Cal.com',
+          icon: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.icon,
+          agentName: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.name,
+          voiceId: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.voiceId,
+          language: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.language,
+          model: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.model,
+          includeDisclaimer: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.includeDisclaimer,
+          businessInfo: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.businessInfo,
+          calCom: PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.calCom,
+          faq: [],
+          phoneNumber: null,
+          workspaceId: auth.workspace.id,
+          createdBy: auth.user.uid,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+
+        // console.log('Creating phone receptionist with Cal.com', _agent);
+        
+        // Create an agent in database
+        res = await dbCreateAgent(_agent);
+        if (res) {
+          // Create an agent on Retell
+          let retellRes = await createRetellAgent(_agent);
+          if (retellRes) {
+            toast.success('Agent created');
+            navigate(`/agent/${agentId}`);
+          } else {
+            // TODO: Delete the agent from the database
+            toast.error('Error creating agent');
+          }
+        } else {
+          toast.error('Error creating agent');
+        }
+
+        setLoading(false);
+
+        break;
+
       default:
         console.error('Invalid agent template');
     }
@@ -188,28 +241,40 @@ export default function Agents() {
         {/* Agent template selection modal */}
         <Dialog.Root open={openAgentTemplate} onOpenChange={setOpenAgentTemplate}>
           <Dialog.Content>
-            <Dialog.Title style={{ marginTop: 0 }}>Select a template</Dialog.Title>
+            <Dialog.Title size="3" style={{ marginTop: 0 }}>Select an agent template</Dialog.Title>
             <VisuallyHidden>
               <Dialog.Description size="2" color="gray" style={{ marginTop: 0 }}>
                 Select an agent template to create a new agent.
               </Dialog.Description>
             </VisuallyHidden>
-            <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
+
+            <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
               <Col xs={12} sm={12} md={6} lg={6} xl={6} style={{ padding: 10 }}>
-                <Card>
+                <Card style={{ padding: 15, height: 280 }}>
                   <Image src={BASIC_PHONE_RECEPTIONIST_TEMPLATE.icon} alt="Basic Phone Receptionist icon" style={{ width: 36, height: 36 }} roundedCircle />
-                  <Text size="3" as="div" weight="bold" style={{ marginTop: 15 }}>Basic Phone Receptionist</Text>
-                  <Text size="1" as="div" color="gray" style={{ marginTop: 5 }}>{BASIC_PHONE_RECEPTIONIST_TEMPLATE.description}</Text>
+                  <Text size="3" as="div" weight="bold" style={{ marginTop: 15 }}>{BASIC_PHONE_RECEPTIONIST_TEMPLATE.title}</Text>
+                  <Text size="1" as="div" color="gray" style={{ marginTop: 10 }}>{BASIC_PHONE_RECEPTIONIST_TEMPLATE.description}</Text>
                   <Button variant="solid" style={{ marginTop: 20 }} onClick={() => {
                     createAgentUsingTemplate('basic-phone-receptionist');
                     setOpenAgentTemplate(false);
                   }}>Create</Button>
                 </Card>
               </Col>
+              <Col xs={12} sm={12} md={6} lg={6} xl={6} style={{ padding: 10 }}>
+                <Card style={{ padding: 15, height: 280 }}>
+                  <Image src={PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.icon} alt="Phone Receptionist with Cal.com icon" style={{ width: 36, height: 36 }} roundedCircle />
+                  <Text size="3" as="div" weight="bold" style={{ marginTop: 15 }}>{PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.title}</Text>
+                  <Text size="1" as="div" color="gray" style={{ marginTop: 10 }}>{PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE.description}</Text>
+                  <Button variant="solid" style={{ marginTop: 20 }} onClick={() => {
+                    createAgentUsingTemplate('phone-receptionist-with-cal-com');
+                    setOpenAgentTemplate(false);
+                  }}>Create</Button>
+                </Card>
+              </Col>
             </Row>
+
             <Row style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
               <Button variant="solid" color="gray" onClick={() => setOpenAgentTemplate(false)}>Cancel</Button>
-
             </Row>
           </Dialog.Content>
         </Dialog.Root>

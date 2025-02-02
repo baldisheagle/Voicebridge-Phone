@@ -7,6 +7,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/agent/BusinessInfo.js';
 import Settings from './components/agent/Settings.js';
 import FAQ from './components/agent/FAQ.js';
+import CalCom from './components/agent/CalCom.js';
 import { dbGetAgent, dbUpdateAgent } from './utilities/database.js';
 import { ArrowLeft, Pencil, UserCircleCheck } from '@phosphor-icons/react';
 
@@ -71,7 +72,7 @@ export default function Agent() {
       </Button>
 
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 5 }}>
-        <Col xs={12} sm={12} md={6} lg={4} xl={4} style={{ padding: 0 }}>
+        <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 0 }}>
           <div style={{ marginTop: 10 }}>
             { agent.icon ? (
               <Image src={agent.icon} alt="Agent icon" style={{ width: 36, height: 36 }} roundedCircle />
@@ -117,6 +118,12 @@ export default function Agent() {
               Settings
             </TabNav.Link>
 
+            {agent.template === 'phone-receptionist-with-cal-com' && (
+              <TabNav.Link href="#" active={activeTab === 'calcom'} onClick={() => setActiveTab('calcom')}>
+                Cal.com
+              </TabNav.Link>
+            )}
+
             <TabNav.Link href="#" active={activeTab === 'businessInfo'} onClick={() => setActiveTab('businessInfo')}>
               Business Info
             </TabNav.Link>
@@ -149,6 +156,10 @@ export default function Agent() {
 
         {activeTab === 'faq' && (
           <FAQ agent={agent} />
+        )}
+
+        {activeTab === 'calcom' && (
+          <CalCom agent={agent} />
         )}
 
       </div>

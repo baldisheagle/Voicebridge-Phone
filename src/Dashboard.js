@@ -161,7 +161,7 @@ export default function Dashboard() {
                         onClick={() => toggleRow(call.id)}
                         style={{ cursor: 'pointer', backgroundColor: expandedRows.has(index) ? 'var(--gray-2)' : 'transparent' }}
                       >
-                        <Table.Cell minWidth="140px">
+                        <Table.Cell minWidth="200px">
                           <Text size="2" weight="medium" as='div'>
                             <IconButton variant="ghost" size="1" color="gray" style={{ marginTop: 0, marginRight: 5 }}>
                               {expandedRows.has(index) ?
