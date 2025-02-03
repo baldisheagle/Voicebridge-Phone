@@ -4,13 +4,13 @@ import { useRequireAuth } from './use-require-auth.js';
 import { getFirstName, useMediaQuery } from './shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "./Theme.js";
-import { Text, Heading, Spinner, Table, IconButton, Button, Badge, Dialog, Tabs, ScrollArea, AlertDialog } from '@radix-ui/themes';
+import { Text, Heading, Spinner, Table, IconButton, Button, Badge, ScrollArea, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import Moment from 'react-moment';
-import { Plus, CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash } from '@phosphor-icons/react';
+import { CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash } from '@phosphor-icons/react';
 import { dbDeleteCall, dbGetCalls } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
-import { CALL_PURPOSES } from './config/retellagents.js';
+import { CALL_PURPOSES } from './config/lists.js';  
 
 export default function Calls() {
 

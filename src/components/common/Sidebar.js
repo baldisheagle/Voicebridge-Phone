@@ -4,7 +4,7 @@ import { Col } from 'react-bootstrap';
 import Logo from "./Logo.js";
 import { useMediaQuery } from "../../helpers/dom.js";
 import { Sidebar, Menu, MenuItem, menuClasses } from 'react-pro-sidebar';
-import { Gear, UserCircle, Phone, HouseSimple, SquaresFour, UsersFour  } from "@phosphor-icons/react";
+import { Gear, UserCircle, Phone, HouseSimple, SquaresFour, UsersFour, UserCircleGear, ArrowDownRight  } from "@phosphor-icons/react";
 
 export default function SidebarComponent(props) {
 
@@ -116,7 +116,7 @@ export default function SidebarComponent(props) {
               <MenuItem 
                 label="Calls"
                 active={location.pathname === '/calls' ? true : false} 
-                icon={<Phone size={15} weight="bold" />}
+                icon={<ArrowDownRight size={15} weight="bold" />}
                 rootStyles={{
                   ['.' + menuClasses.button]: {
                     marginBottom: '0px',
@@ -137,7 +137,7 @@ export default function SidebarComponent(props) {
                 onClick={() => navigate("/agent")}>Agent
               </MenuItem> */}
 
-              <MenuItem 
+              {/* <MenuItem 
                 label="Agents"
                 active={location.pathname === '/agents' ? true : false} 
                 icon={<UsersFour size={15} weight="bold" />}
@@ -147,10 +147,34 @@ export default function SidebarComponent(props) {
                   },
                 }}
                 onClick={() => navigate("/agents")}>Agents
+              </MenuItem> */}
+
+              <MenuItem 
+                label="Receptionist"
+                active={location.pathname === '/receptionist' ? true : false} 
+                icon={<UserCircleGear size={15} weight="bold" />}
+                rootStyles={{
+                  ['.' + menuClasses.button]: {
+                    marginBottom: '0px',
+                  },
+                }}
+                onClick={() => navigate("/receptionist")}>Receptionist
+              </MenuItem>
+
+              <MenuItem 
+                label="Phone Numbers"
+                active={location.pathname === '/phone-numbers' ? true : false} 
+                icon={<Phone size={15} weight="bold" />}
+                rootStyles={{
+                  ['.' + menuClasses.button]: {
+                    marginBottom: '0px',
+                  },
+                }}
+                onClick={() => navigate("/phone-numbers")}>Phone Numbers
               </MenuItem>
 
 
-              <MenuItem 
+              {/* <MenuItem 
                 label="Integrations"
                 active={location.pathname === '/integrations' ? true : false} 
                 icon={<SquaresFour size={15} weight="bold" />}
@@ -160,7 +184,7 @@ export default function SidebarComponent(props) {
                   },
                 }}
                 onClick={() => navigate("/integrations")}>Integrations
-              </MenuItem>
+              </MenuItem> */}
 
               <MenuItem 
                 label="Settings"

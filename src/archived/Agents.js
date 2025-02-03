@@ -1,17 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRequireAuth } from './use-require-auth.js';
-import { useMediaQuery } from './shared-functions.js';
+import { useRequireAuth } from '../use-require-auth.js';
+import { useMediaQuery } from '../shared-functions.js';
 import { Row, Col, Image } from 'react-bootstrap';
-import { ThemeContext } from "./Theme.js";
+import { ThemeContext } from "../Theme.js";
 import { Heading, Spinner, Text, Button, DropdownMenu, Card, Dialog, VisuallyHidden, IconButton, Inset } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { UserCircleCheck, Plus, Trash, DotsThreeVertical } from '@phosphor-icons/react';
-import { dbGetAgents, dbGetPhoneNumbers, dbCreateAgent, dbDeleteAgent } from './utilities/database.js';
-import { formatPhoneNumber } from './helpers/string.js';
-import { BASIC_PHONE_RECEPTIONIST_TEMPLATE, PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE, TIMEZONE_OFFSETS } from './config/retellagents.js';
+import { dbGetAgents, dbGetPhoneNumbers, dbCreateAgent, dbDeleteAgent } from '../utilities/database.js';
+import { formatPhoneNumber } from '../helpers/string.js';
+import { BASIC_PHONE_RECEPTIONIST_TEMPLATE, PHONE_RECEPTIONIST_WITH_CAL_COM_TEMPLATE, TIMEZONE_OFFSETS } from '../config/retellagents.js';
 import { v4 as uuidv4 } from 'uuid';
-import { createRetellAgent, deleteRetellAgent } from './utilities/retell.js';
+import { createRetellAgent, deleteRetellAgent } from '../utilities/retell.js';
 
 export default function Agents() {
 

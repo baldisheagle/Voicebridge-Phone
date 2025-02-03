@@ -17,8 +17,8 @@ import NotFound from "./NotFound.js";
 import Dashboard from "./Dashboard.js";
 import Settings from './Settings.js';
 import Calls from './Calls.js';
-import Agents from './Agents.js';
-import Agent from './Agent.js';
+import Receptionist from './Receptionist.js';
+import PhoneNumbers from './PhoneNumbers.js';
 import Business from './Business.js';
 import Integrations from './Integrations.js';
 import UserProfile from './Profile.js';
@@ -35,7 +35,7 @@ export default function App() {
   return (
     <ProvideAuth>
       <Router>
-        <Theme accentColor="orange" appearance={theme === 'dark-theme' ? "dark" : "light"}>
+        <Theme accentColor="indigo" appearance={theme === 'dark-theme' ? "dark" : "light"}>
           <Container className={`App ${theme}`} fluid style={{ marginTop: 0, padding: 0, backgroundColor: `var(--accent-1)` }}>
             <Row style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginTop: 0, marginLeft: 0, marginRight: 0 }}>
               <SidebarComponent />
@@ -45,8 +45,10 @@ export default function App() {
                   {/* Main */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calls" element={<Calls />} />
-                  <Route path="/agents" element={<Agents />} />
-                  <Route path="/agent/:agentId" element={<Agent />} />
+                  {/* <Route path="/agents" element={<Agents />} /> */}
+                  {/* <Route path="/agent/:agentId" element={<Agent />} /> */}
+                  <Route path="/receptionist" element={<Receptionist />} />
+                  <Route path="/phone-numbers" element={<PhoneNumbers />} />
                   <Route path="/business" element={<Business />} />
                   <Route path="/integrations" element={<Integrations />} />
                   <Route path="/profile" element={<UserProfile />} />

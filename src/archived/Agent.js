@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useRequireAuth } from './use-require-auth.js';
+import { useRequireAuth } from '../use-require-auth.js';
 import { Row, Col, Image } from 'react-bootstrap';
 import { Button, Heading, Spinner, TabNav, TextField } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import BusinessInfo from './components/agent/BusinessInfo.js';
-import Settings from './components/agent/Settings.js';
-import FAQ from './components/agent/FAQ.js';
-import CalCom from './components/agent/CalCom.js';
-import { dbGetAgent, dbUpdateAgent } from './utilities/database.js';
+import BusinessInfo from '../components/agent/BusinessInfo.js';
+import Settings from '../components/agent/Settings.js';
+import FAQ from '../components/agent/FAQ.js';
+import CalCom from '../components/agent/CalCom.js';
+import { dbGetAgent, dbUpdateAgent } from '../utilities/database.js';
 import { ArrowLeft, Pencil, UserCircleCheck } from '@phosphor-icons/react';
 
 export default function Agent() {
@@ -67,12 +67,12 @@ export default function Agent() {
   return (
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
 
-      <Button size="1" variant="ghost" color="gray" onClick={() => navigate('/agents')} style={{ marginTop: 0 }}>
-        <ArrowLeft size={12} weight="bold" color='gray' style={{ marginRight: 5 }} /> Back to all agents
+      <Button size="2" variant="ghost" color="gray" onClick={() => navigate('/agents')} style={{ marginTop: 0, marginLeft: 0 }}>
+        <ArrowLeft size={12} weight="bold" style={{ marginRight: 5 }} /> Back
       </Button>
 
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 5 }}>
-        <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 0 }}>
+        <Col xs={12} sm={12} md={12} lg={9} xl={7} style={{ padding: 0 }}>
           <div style={{ marginTop: 10 }}>
             { agent.icon ? (
               <Image src={agent.icon} alt="Agent icon" style={{ width: 36, height: 36 }} roundedCircle />

@@ -9,7 +9,7 @@ import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight } f
 import toast, { Toaster } from 'react-hot-toast';
 import { dbDeleteCall, dbGetAgents, dbGetCalls, dbGetPhoneNumbers } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
-import { CALL_PURPOSES } from './config/retellagents.js';
+import { CALL_PURPOSES } from './config/lists.js';
 import Moment from 'react-moment';
 
 export default function Dashboard() {

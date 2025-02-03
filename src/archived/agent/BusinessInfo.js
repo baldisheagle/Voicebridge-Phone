@@ -4,7 +4,7 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
 import { Button, Spinner, Text, TextField, TextArea, Select, Badge } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { TIMEZONE_OFFSETS, HOURS } from '../../config/lists.js';
+import { TIMEZONE_OFFSETS, HOURS } from '../../config/retelltemplates.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
 import { updateRetellLlmAndAgent } from '../../utilities/retell.js';
 import { validateEmail } from '../../helpers/string.js';

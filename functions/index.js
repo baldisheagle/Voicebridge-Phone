@@ -337,6 +337,103 @@ exports.deleteRetellAgent = onRequest((req, res) => {
 });
 
 /*
+  Function: Update Retell LLM for Receptionist
+  Parameters:
+    llm
+  Return:
+    null
+*/
+
+exports.updateRetellLlmForReceptionist = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+
+      console.log('Updating Retell LLM for Receptionist');
+
+      if (req.body && req.body.llm_id && req.body.llm) {
+
+        const llm_id = req.body.llm_id;
+        const llm = req.body.llm;
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Update LLM
+        const retellLlm = await client.llm.update(llm_id, llm);
+
+        console.log('Retell LLM updated', llm_id);
+
+        res.status(200).send(JSON.stringify({ message: "Retell LLM updated" }));
+        return;
+
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+  });
+
+});
+
+/*
+  Function: Update Retell Agent for Receptionist
+  Parameters:
+    agent_id
+    agent
+  Return:
+    null
+*/
+
+exports.updateRetellAgentForReceptionist = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req && req.headers) {
+
+      console.log('Updating Retell Agent for Receptionist');
+
+      if (req.body && req.body.agent_id && req.body.agent) {
+
+        const agent_id = req.body.agent_id;
+        const agent = req.body.agent;
+
+        // Create client
+        const client = new Retell({
+          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        });
+
+        // Update Agent
+        const retellAgent = await client.agent.update(agent_id, agent);
+
+        res.status(200).send(JSON.stringify({ message: "Retell Agent updated" }));
+        return;
+
+      } else {
+        console.error('Missing parameters', req.body);
+        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+        return;
+      }
+
+    } else {
+      console.error('Authorization failed', req.headers);
+      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      return;
+    }
+  });
+
+});
+
+/*
   Function: Update Retell Agent
   Parameters:
     retellAgentId

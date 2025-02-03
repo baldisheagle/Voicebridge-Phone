@@ -3,10 +3,11 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
 import { Select, Spinner, Text, TextField, Button, Switch } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { LANGUAGES, VOICES } from '../../config/retelltemplates.js';
+import { LANGUAGES, VOICES } from '../../config/lists.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
 import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
-import { connectRetellPhoneNumberToAgent, updateRetellLlmAndAgent } from '../../utilities/retell.js';
+import { connectRetellPhoneNumberToAgent } from '../../utilities/retell.js';
+import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
 
 export default function CallSettings({ agent }) {
 
@@ -17,8 +18,6 @@ export default function CallSettings({ agent }) {
   const [voiceId, setVoiceId] = useState(agent.voiceId);
   const [includeDisclaimer, setIncludeDisclaimer] = useState(agent.includeDisclaimer);
   const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber);
-  const [calEventTypeId, setCalEventTypeId] = useState(agent.calCom ? agent.calCom.eventId : null);
-  const [calApiKey, setCalApiKey] = useState(agent.calCom ? agent.calCom.apiKey : null);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +50,7 @@ export default function CallSettings({ agent }) {
       }
     }
 
+    // Create new agent object
     let _agent = {
       ...agent,
       language: language,
@@ -58,16 +58,11 @@ export default function CallSettings({ agent }) {
       voiceId: voiceId,
       phoneNumber: agentPhoneNumber,
       includeDisclaimer: includeDisclaimer,
-      calCom: {
-        eventId: calEventTypeId ? parseInt(calEventTypeId) : null,
-        apiKey: calApiKey ? calApiKey : null
-      }
     }
 
     try {
 
-      // console.log('Updating agent', _agent);
-
+      // Update agent in database
       let res = await dbUpdateAgent(_agent);
 
       if (res) {
@@ -76,20 +71,24 @@ export default function CallSettings({ agent }) {
           let phoneNumber = phoneNumbers.find(p => p.id === agentPhoneNumber);
           if (phoneNumber) {
             // Connect phone number to agent
-            // console.log('Connecting phone number to agent', phoneNumber.number, agent.retellAgentId);
             await connectRetellPhoneNumberToAgent(agent.retellAgentId, phoneNumber.number);
           }
         }
-        // Update Retell LLM and Agent
-        await updateRetellLlmAndAgent(_agent);
-        toast.success('Call settings updated');
+
+        // Update Retell LLM
+        let retellLlm = await updateReceptionistLlm(_agent);
+
+        // TODO: Update Retell Agent
+        let retellAgent = await updateReceptionistAgent(_agent);
+
+        toast.success('Settings updated');
 
       } else {
-        toast.error('Error updating call settings');
+        toast.error('Error updating settings');
       }
 
     } catch (error) {
-      toast.error('Error updating call settings');
+      toast.error('Error updating settings');
     }
   }
 

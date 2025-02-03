@@ -1,11 +1,11 @@
 // Retell API
 
-import { TIMEZONE_OFFSETS } from "../config/retellagents";
+import { TIMEZONE_OFFSETS } from "../config/lists.js";
 
 
 // Import phone number using Retell's Import Phone Number API
 export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickname) => {
-    console.log('Importing Phone Number');
+    // console.log('Importing Phone Number');
     let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/importRetellPhoneNumber', {
         method: 'POST',
         headers: {
@@ -30,7 +30,7 @@ export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickn
 
 // Delete phone number using Retell's Delete Phone Number API
 export const deleteRetellPhoneNumber = async (number) => {
-    console.log('Deleting Phone Number');
+    // console.log('Deleting Phone Number');
     try {
         
         let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellPhoneNumber', {
@@ -50,7 +50,7 @@ export const deleteRetellPhoneNumber = async (number) => {
         }
         
     } catch (error) {
-        console.error('Error deleting phone number', error);
+        // console.error('Error deleting phone number', error);
         return false;
     }
 }
@@ -70,17 +70,231 @@ export const buyRetellPhoneNumber = async (areaCode, nickname) => {
             nickname: nickname
         })
     }).catch(err => {
-        console.error('Error buying phone number', err);
+        // console.error('Error buying phone number', err);
         return false;
     });
 
     if (res.status !== 200) {
-        console.log('buy phone number error', res);
+        // console.log('buy phone number error', res);
         return false;
     } else {
         let data = await res.json();
-        console.log('buy phone number', data);
+        // console.log('buy phone number', data);
         return data;
+    }
+}
+
+// Connect Phone Number to Retell Agent
+export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber) => {
+
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/connectRetellPhoneNumberToAgent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            retellAgentId: retellAgentId, 
+            phoneNumber: phoneNumber 
+        })
+    }).catch(err => {
+        console.error('Error connecting phone number to Retell Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+    
+}
+
+// TODO: Create Retell LLM for Receptionist
+export const createRetellLlmForReceptionist = async (llm) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellLlmForReceptionist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            llm: llm
+        })
+    }).catch(err => {
+        console.error('Error creating Retell LLM', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// Update Retell LLM for Receptionist
+export const updateRetellLlmForReceptionist = async (llm_id, llm) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellLlmForReceptionist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            llm_id: llm_id,
+            llm: llm
+        })
+    }).catch(err => {
+        console.error('Error updating Retell LLM', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// TODO: Create Retell Agent for Receptionist
+export const createRetellAgentForReceptionist = async (agent) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgentForReceptionist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            agent: agent
+        })
+    }).catch(err => {
+        console.error('Error creating Retell Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// Update Retell Agent for Receptionist
+export const updateRetellAgentForReceptionist = async (agent_id, agent) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellAgentForReceptionist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            agent_id: agent_id,
+            agent: agent
+        })
+    }).catch(err => {
+        console.error('Error updating Retell Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// Delete Retell Agent
+export const deleteRetellAgent = async (retellLlmId, retellAgentId) => {
+
+    // Call function to delete agent on Retell
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellAgent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            retellLlmId: retellLlmId, 
+            retellAgentId: retellAgentId 
+        })
+    }).catch(err => {
+        console.error('Error deleting Retell Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// ---------------------------- //
+
+// Create Retell Agent
+export const createRetellAgent = async (agent) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            retellAgentCode: agent.retellAgentCode,
+            template: agent.template,
+            agentId: agent.id,
+            agentName: agent.agentName,
+            businessName: agent.businessInfo.name,
+            businessInfo: createBusinessInfo(agent.businessInfo),
+            faq: createFAQ(agent.faq),
+            model: agent.model,
+            voiceId: agent.voiceId,
+            language: agent.language,
+            includeDisclaimer: agent.includeDisclaimer,
+            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
+            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
+            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
+        })
+    }).catch(err => {
+        console.error('Error creating Retell Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// Update Retell LLM and Agent
+export const updateRetellLlmAndAgent = async (agent) => {
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellLlmAndAgent', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            retellAgentId: agent.retellAgentId,
+            retellLlmId: agent.retellLlmId,
+            retellAgentCode: agent.retellAgentCode,
+            template: agent.template,
+            agentId: agent.id,
+            agentName: agent.agentName,
+            businessName: agent.businessInfo.name,
+            businessInfo: createBusinessInfo(agent.businessInfo),
+            faq: createFAQ(agent.faq),
+            model: agent.model,
+            voiceId: agent.voiceId,
+            language: agent.language,
+            includeDisclaimer: agent.includeDisclaimer,
+            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
+            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
+            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
+        })
+    }).catch(err => {
+        console.error('Error updating Retell LLM and Agent', err);
+        return false;
+    });
+
+    if (res.status !== 200) {
+        return false;
+    } else {
+        return true;
     }
 }
 
@@ -160,127 +374,4 @@ const createFAQ = (faq) => {
     }
 
     return knowledge;
-}
-
-// Create Retell Agent
-export const createRetellAgent = async (agent) => {
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgent', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            retellAgentCode: agent.retellAgentCode,
-            template: agent.template,
-            agentId: agent.id,
-            agentName: agent.agentName,
-            businessName: agent.businessInfo.name,
-            businessInfo: createBusinessInfo(agent.businessInfo),
-            faq: createFAQ(agent.faq),
-            model: agent.model,
-            voiceId: agent.voiceId,
-            language: agent.language,
-            includeDisclaimer: agent.includeDisclaimer,
-            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
-            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
-            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
-        })
-    }).catch(err => {
-        console.error('Error creating Retell Agent', err);
-        return false;
-    });
-
-    if (res.status !== 200) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-
-// Delete Retell Agent
-export const deleteRetellAgent = async (retellLlmId, retellAgentId) => {
-
-    // Call function to delete agent on Retell
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellAgent', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-            retellLlmId: retellLlmId, 
-            retellAgentId: retellAgentId 
-        })
-    }).catch(err => {
-        console.error('Error deleting Retell Agent', err);
-        return false;
-    });
-
-    if (res.status !== 200) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-// Update Retell LLM and Agent
-export const updateRetellLlmAndAgent = async (agent) => {
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellLlmAndAgent', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            retellAgentId: agent.retellAgentId,
-            retellLlmId: agent.retellLlmId,
-            retellAgentCode: agent.retellAgentCode,
-            template: agent.template,
-            agentId: agent.id,
-            agentName: agent.agentName,
-            businessName: agent.businessInfo.name,
-            businessInfo: createBusinessInfo(agent.businessInfo),
-            faq: createFAQ(agent.faq),
-            model: agent.model,
-            voiceId: agent.voiceId,
-            language: agent.language,
-            includeDisclaimer: agent.includeDisclaimer,
-            calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
-            calApiKey: agent.calCom ? agent.calCom.apiKey : null,
-            timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
-        })
-    }).catch(err => {
-        console.error('Error updating Retell LLM and Agent', err);
-        return false;
-    });
-
-    if (res.status !== 200) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-// Connect Phone Number to Retell Agent
-export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber) => {
-
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/connectRetellPhoneNumberToAgent', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-            retellAgentId: retellAgentId, 
-            phoneNumber: phoneNumber 
-        })
-    }).catch(err => {
-        console.error('Error connecting phone number to Retell Agent', err);
-        return false;
-    });
-
-    if (res.status !== 200) {
-        return false;
-    } else {
-        return true;
-    }
-    
 }
