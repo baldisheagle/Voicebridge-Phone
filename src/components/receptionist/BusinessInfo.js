@@ -41,17 +41,22 @@ export default function BusinessInfo({ agent }) {
   // Save business profile
   const saveBusinessInfo = async () => {
 
+    setLoading(true);
+
     if (name.length === 0) {
       toast.error('Business name is required');
+      setLoading(false);
       return;
     }
 
     // Check if email is valid
     if (email.length > 0 && !validateEmail(email)) {
       toast.error('Invalid email');
+      setLoading(false);
       return;
     }
 
+    // Create new agent object
     let _agent = {
       ...agent,
       businessInfo: {
@@ -68,14 +73,22 @@ export default function BusinessInfo({ agent }) {
       }
     }
 
-    let res = await dbUpdateAgent(_agent);
-    if (res) {
-      // Update Retell LLM
-      let llm = await updateReceptionistLlm(_agent);
+    try {
 
-      toast.success('Business profile updated');
-    } else {
+      let res = await dbUpdateAgent(_agent);
+      if (res) {
+        // Update Retell LLM
+        let llm = await updateReceptionistLlm(_agent);
+        toast.success('Business profile updated');
+        setLoading(false);
+      } else {
+        toast.error('Error updating business profile');
+        setLoading(false);
+      }
+
+    } catch (error) {
       toast.error('Error updating business profile');
+      setLoading(false);
     }
 
   }

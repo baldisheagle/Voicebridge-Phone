@@ -110,14 +110,18 @@ export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber
 }
 
 // TODO: Create Retell LLM for Receptionist
-export const createRetellLlmForReceptionist = async (llm) => {
-    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellLlmForReceptionist', {
+export const createRetellLlmAndAgentForReceptionist = async (agentId, workspaceId, llm, agent) => {
+
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellLlmAndAgentForReceptionist', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            llm: llm
+            agentId: agentId,
+            workspaceId: workspaceId,
+            llm: llm,
+            agent: agent
         })
     }).catch(err => {
         console.error('Error creating Retell LLM', err);

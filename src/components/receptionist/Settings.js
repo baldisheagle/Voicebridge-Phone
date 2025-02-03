@@ -41,11 +41,14 @@ export default function CallSettings({ agent }) {
 
   const saveCallSettings = async () => {
 
+    setLoading(true);
+
     // If the number if not null, make sure the phone number is not connected to another agent that is not this one
     if (agentPhoneNumber) {
       let a = agents.find(a => a.phoneNumber === agentPhoneNumber && a.id !== agent.id);
       if (a) {
         toast.error('This phone number is already connected to another agent');
+        setLoading(false);
         return;
       }
     }
@@ -78,17 +81,22 @@ export default function CallSettings({ agent }) {
         // Update Retell LLM
         let retellLlm = await updateReceptionistLlm(_agent);
 
-        // TODO: Update Retell Agent
+        // Update Retell Agent
         let retellAgent = await updateReceptionistAgent(_agent);
 
-        toast.success('Settings updated');
-
+        if (retellLlm && retellAgent) {
+          toast.success('Settings updated');
+        } else {
+          toast.error('Error updating settings');
+        }
+        setLoading(false);
       } else {
         toast.error('Error updating settings');
+        setLoading(false);
       }
-
     } catch (error) {
       toast.error('Error updating settings');
+      setLoading(false);
     }
   }
 

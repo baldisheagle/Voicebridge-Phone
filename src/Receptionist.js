@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from './use-require-auth.js';
 import { Row } from 'react-bootstrap';
-import { Heading, Spinner, TabNav, Text } from '@radix-ui/themes';
+import { Heading, Spinner, TabNav, Button } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/receptionist/BusinessInfo.js';
 import Settings from './components/receptionist/Settings.js';
 import Calendar from './components/receptionist/Calendar.js';
 import FAQ from './components/receptionist/FAQ.js';
-import { dbGetAgents } from './utilities/database.js';
+import { dbCreateAgent, dbGetAgents } from './utilities/database.js';
+import { v4 as uuidv4 } from 'uuid';
+import { PHONE_RECEPTIONIST_TEMPLATE } from './config/agenttemplates.js';
+import { createReceptionist } from './utilities/receptionist.js';
 
 export default function Receptionist() {
 
@@ -15,7 +18,7 @@ export default function Receptionist() {
 
   const [activeTab, setActiveTab] = useState('settings');
   const [loading, setLoading] = useState(true);
-  const [agent, setAgent] = useState(null);
+  const [receptionist, setReceptionist] = useState(null);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
@@ -29,14 +32,55 @@ export default function Receptionist() {
     setLoading(true);
     let agents = await dbGetAgents(auth.workspace.id);
     if (agents && agents.length > 0) {
-      setAgent(agents[0]);
+      setReceptionist(agents[0]);
     } else {
       toast.error('Agents not found');
     }
     setLoading(false);
   }
 
-  if (!auth || !auth.user || !auth.workspace || !agent || loading) {
+  const initReceptionist = async () => {
+
+    let agentId = uuidv4();
+    let retellAgentCode = uuidv4();
+    
+    let _agent = {
+      id: agentId,
+      retellAgentCode: retellAgentCode,
+      template: 'phone-receptionist',
+      name: 'Testing',
+      icon: PHONE_RECEPTIONIST_TEMPLATE.icon,
+      agentName: PHONE_RECEPTIONIST_TEMPLATE.name,
+      voiceId: PHONE_RECEPTIONIST_TEMPLATE.voiceId,
+      language: PHONE_RECEPTIONIST_TEMPLATE.language,
+      model: PHONE_RECEPTIONIST_TEMPLATE.model,
+      includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
+      businessInfo: PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
+      calCom: PHONE_RECEPTIONIST_TEMPLATE.calCom,
+      faq: [],
+      phoneNumber: null,
+      workspaceId: auth.workspace.id,
+      createdBy: auth.user.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    let res = await dbCreateAgent(_agent);
+
+    if (res) {
+      let retellRes = await createReceptionist(_agent);
+      if (retellRes) {
+        toast.success('Receptionist created');
+        setReceptionist(_agent);
+      } else {
+        toast.error('Error creating receptionist');
+      }
+    } else {
+      toast.error('Error creating agent');
+    }
+  }
+
+  if (!auth || !auth.user || !auth.workspace || loading) {
     return (
       <div style={{ width: '100%', minHeight: '100vh' }}>
         <Row style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginLeft: 0, marginRight: 0, height: '80vh' }}>
@@ -51,7 +95,14 @@ export default function Receptionist() {
 
       <Heading size='4'>Receptionist</Heading>
 
-      <div style={{ width: '100%', marginTop: 10 }}>
+      {!receptionist && (
+        <div style={{ width: '100%', marginTop: 10 }}>
+          <Button onClick={() => initReceptionist()}>Create your receptionist</Button>
+        </div>
+      )}
+
+      {receptionist && (
+        <div style={{ width: '100%', marginTop: 10 }}>
           <TabNav.Root>
             <TabNav.Link href="#" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
               Settings
@@ -79,27 +130,29 @@ export default function Receptionist() {
 
           </TabNav.Root>
         </div>
+      )}
 
-
-      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      {receptionist && (  
+        <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
 
         {activeTab === 'settings' && (    
-          <Settings agent={agent} />
+          <Settings agent={receptionist} />
         )}
 
         {activeTab === 'businessInfo' && (
-          <BusinessInfo agent={agent} />
+          <BusinessInfo agent={receptionist} />
         )}
 
         {activeTab === 'calendar' && (
-          <Calendar agent={agent} />
+          <Calendar agent={receptionist} />
         )}
 
         {activeTab === 'faq' && (
-          <FAQ agent={agent} />
+          <FAQ agent={receptionist} />
         )}
 
-      </div>
+        </div>
+      )}
 
       <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
     </div>

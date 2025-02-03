@@ -2,12 +2,70 @@
 
 import { TIMEZONE_OFFSETS } from "../config/lists";
 import { RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT, RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM } from "../config/retelltemplates.js";
-import { updateRetellAgentForReceptionist, updateRetellLlmForReceptionist } from "./retell.js";
+import { createRetellLlmAndAgentForReceptionist, updateRetellAgentForReceptionist, updateRetellLlmForReceptionist } from "./retell.js";
+
+// Create Retell LLM and Agent for Receptionist
+export const createReceptionist = async (_agent) => {
+
+    // Create Retell LLM
+    let llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM));
+
+    // Replace variables in model
+    llm.model = _agent.model;
+
+    // Replace variables in begin_message
+    llm.begin_message = llm.begin_message.replaceAll('[[AGENT_NAME]]', _agent.agentName);
+    llm.begin_message = llm.begin_message.replaceAll('[[BUSINESS_NAME]]', _agent.businessInfo.name);
+    llm.begin_message = llm.begin_message.replaceAll('[[INCLUDE_DISCLAIMER]]', _agent.includeDisclaimer ? 'If this is an emergency, please hang up and dial Nine-One-One.' : '');
+
+    // Replace variables in general_prompt
+    llm.general_prompt = llm.general_prompt.replaceAll('[[AGENT_NAME]]', _agent.agentName);
+    llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_NAME]]', _agent.businessInfo.name);
+    llm.general_prompt = llm.general_prompt.replaceAll('[[BUSINESS_INFO]]', createBusinessInfo(_agent.businessInfo));
+    llm.general_prompt = llm.general_prompt.replaceAll('[[FAQ]]', createFAQ(_agent.faq));
+
+    // Replace variables in general_tools
+    llm.general_tools = llm.general_tools.map(tool => {
+        if (tool.cal_api_key) {
+            tool.cal_api_key = tool.cal_api_key.replaceAll('[[CAL_API_KEY]]', _agent.calCom.apiKey);
+        }
+        if (tool.event_type_id) {
+            tool.event_type_id = parseInt(tool.event_type_id.replaceAll('[[CAL_EVENT_TYPE_ID]]', _agent.calCom.eventId));
+        }
+        if (tool.description) {
+            tool.description = tool.description.replaceAll('[[BUSINESS_NAME]]', _agent.businessInfo.name);
+        }
+        if (tool.timezone) {
+            tool.timezone = tool.timezone.replaceAll('[[TIMEZONE]]', TIMEZONE_OFFSETS.find(offset => offset.value === _agent.businessInfo.timezone).timezone);
+        }
+        return tool;
+    });
+
+    // Create Retell Agent
+
+    let agent = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT));
+
+    // Update agent's dynamic properties
+    agent.agent_name = _agent.retellAgentCode;
+    agent.voice_id = _agent.voiceId;
+    agent.language = _agent.language;
+    agent.response_engine.llm_id = llm.llm_id;
+
+    // Call createRetellLlmForReceptionist function
+    let res = await createRetellLlmAndAgentForReceptionist(_agent.id, _agent.workspaceId, llm, agent);
+
+    if (res) {
+        return true;
+    } else {
+        return false;
+    }
+
+}
 
 // Update Retell LLM
 export const updateReceptionistLlm = async (_agent) => {
 
-    // TODO: Update Retell LLM
+    // Update Retell LLM
     let llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM));
 
     // Replace variables in model
