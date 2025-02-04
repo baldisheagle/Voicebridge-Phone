@@ -33,8 +33,6 @@ export default function Receptionist() {
     let agents = await dbGetAgents(auth.workspace.id);
     if (agents && agents.length > 0) {
       setReceptionist(agents[0]);
-    } else {
-      toast.error('Agents not found');
     }
     setLoading(false);
   }
@@ -120,6 +118,10 @@ export default function Receptionist() {
               Calendar
             </TabNav.Link>
 
+            {/* <TabNav.Link href="#" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')}>
+              Notifications
+            </TabNav.Link> */}
+
             {/* <TabNav.Link href="#" active={activeTab === 'questions'} onClick={() => setActiveTab('questions')}>
               Questions
             </TabNav.Link> */}
@@ -133,7 +135,7 @@ export default function Receptionist() {
       )}
 
       {receptionist && (  
-        <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+        <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
         {activeTab === 'settings' && (    
           <Settings agent={receptionist} />

@@ -10,6 +10,8 @@ export function useRequireAuth(redirectUrl = '/'){
   useEffect(() => {
     if (auth.user === false){
       navigate(redirectUrl)
+    } else if (auth.user && !auth.user.emailVerified) {
+      navigate('/verify-email')
     }
   }, [auth]);
 

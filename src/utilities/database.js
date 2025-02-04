@@ -8,7 +8,7 @@ export const dbUpdateWorkspace = async(workspaceId, _workspace) => {
     const docRef = await setDoc(doc(db, "workspaces", workspaceId), _workspace);
     return true;
   } catch (error) {
-    console.error("Error updating workspace:", error);
+    // console.error("Error updating workspace:", error);
     return false;
   }
 }
@@ -20,7 +20,7 @@ export const dbUpdateUser = async(_user) => {
     await setDoc(docRef, _user);
     return true;
   } catch (error) {
-    console.error("Error updating user:", error);
+    // console.error("Error updating user:", error);
     return false;
   }
 }
@@ -35,7 +35,7 @@ export const dbGetPhoneNumbers = async(workspaceId) => {
     const _phoneNumbers = snapshot.docs.map((doc) => doc.data());
     return _phoneNumbers;
   } catch (error) {
-    console.error("Error fetching phone numbers:", error);
+    // console.error("Error fetching phone numbers:", error);
     return [];
   }
 }
@@ -51,7 +51,7 @@ export const dbUpdatePhoneNumber = async(_phoneNumber) => {
     await setDoc(docRef, _phoneNumber);
     return true;
   } catch (error) {
-    console.error("Error updating phone number:", error);
+    // console.error("Error updating phone number:", error);
     return false;
   }
 }
@@ -62,14 +62,13 @@ export const dbAddPhoneNumber = async(_phoneNumber) => {
     const docRef = await addDoc(collection(db, "phonenumbers"), _phoneNumber);
     return docRef.id;
   } catch (error) {
-    console.error("Error adding phone number:", error);
+    // console.error("Error adding phone number:", error);
     return false;
   }
 }
 
 // Delete phone number
 export const dbDeletePhoneNumber = async(phoneNumberId, workspaceId) => {
-  console.log('Deleting phone number', phoneNumberId);
   try {
     const snapshot = await getDocs(query(collection(db, "phonenumbers"), where("id", "==", phoneNumberId), where("workspaceId", "==", workspaceId), limit(1)));
     if (snapshot.empty) {
@@ -79,7 +78,7 @@ export const dbDeletePhoneNumber = async(phoneNumberId, workspaceId) => {
     await deleteDoc(docRef);
     return true;
   } catch (error) {
-    console.error("Error deleting phone number:", error);
+    // console.error("Error deleting phone number:", error);
     return false;
   }
 }
@@ -94,7 +93,7 @@ export const dbGetCalendars = async(workspaceId) => {
     const _calendars = snapshot.docs.map((doc) => doc.data());
     return _calendars;
   } catch (error) {
-    console.error("Error fetching calendars:", error);
+    // console.error("Error fetching calendars:", error);
     return [];
   }
 }
@@ -109,7 +108,7 @@ export const dbGetCalls = async(workspaceId) => {
     const _calls = snapshot.docs.map((doc) => doc.data());
     return _calls;
   } catch (error) {
-    console.error("Error fetching calls:", error);
+    // console.error("Error fetching calls:", error);
     return [];
   }
 }
@@ -124,7 +123,7 @@ export const dbGetAgent = async(workspaceId, agentId) => {
     const _agent = snapshot.docs[0].data();
     return _agent;
   } catch (error) {
-    console.error("Error fetching agent:", error);
+    // console.error("Error fetching agent:", error);
     return null;
   }
 }
@@ -150,7 +149,7 @@ export const dbGetAgents = async(workspaceId) => {
     const _agents = snapshot.docs.map((doc) => doc.data());
     return _agents;
   } catch (error) {
-    console.error("Error fetching agents:", error);
+    // console.error("Error fetching agents:", error);
     return [];
   }
 }
@@ -174,7 +173,7 @@ export const dbUpdateAgent = async(_agent) => {
 
   
   } catch (error) {
-    console.error("Error updating agent:", error);
+    // console.error("Error updating agent:", error);
     return false;
   }
 }
@@ -190,7 +189,7 @@ export const dbDeleteAgent = async(workspaceId, agentId) => {
     await deleteDoc(docRef);
     return true;
   } catch (error) {
-    console.error("Error deleting agent:", error);
+    // console.error("Error deleting agent:", error);
     return false;
   }
 }
@@ -206,7 +205,7 @@ export const dbDeleteCall = async(workspaceId, callId) => {
     await deleteDoc(docRef);
     return true;
   } catch (error) {
-    console.error("Error deleting call:", error);
+    // console.error("Error deleting call:", error);
     return false;
   }
 }
@@ -222,7 +221,7 @@ export const dbUpdateCalendarName = async(calendarId, name, workspaceId) => {
     await setDoc(docRef, { name: name });
     return true;
   } catch (error) {
-    console.error("Error updating calendar name:", error);
+    // console.error("Error updating calendar name:", error);
     return false;
   }
 }
@@ -238,7 +237,7 @@ export const dbDeleteCalendar = async(calendarId, workspaceId) => {
     await deleteDoc(docRef);
     return true;
   } catch (error) {
-    console.error("Error deleting calendar:", error);
+    // console.error("Error deleting calendar:", error);
     return false;
   }
 }

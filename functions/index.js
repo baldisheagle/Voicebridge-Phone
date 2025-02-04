@@ -24,20 +24,11 @@ require('dotenv').config();
 
 // Sendgrid
 const emailTemplates = {
-  NewInvitationEmail: "d-2b28b347865f44da8e17fad96bbb36ff",
-  WelcomeEmail: "d-0752ffa59ab3486db935fd71c87d2694",
+  VerificationEmail: "d-09327200b499416890073f44427a544f",
 };
 
 // Allowed origins
 const allowedOrigins = ['https://voicebridge-app.web.app', 'https://app.voicebridgeai.com']; // , 'http://localhost:3000'
-
-// Import constants
-const { 
-  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_LLM, 
-  RETELL_TEMPLATE_BASIC_PHONE_RECEPTIONIST_AGENT,
-  RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_LLM,
-  RETELL_TEMPLATE_PHONE_RECEPTIONIST_WITH_CAL_COM_AGENT,
-} = require('./templates');
 
 // Cors options
 const corsOptions = {
@@ -55,8 +46,46 @@ const corsOptions = {
 // Cors middleware
 const corsMiddleware = cors(corsOptions);
 
-/*
 
+/*
+  On new user creation: Send verification email
+  Parameters:
+    email
+  Return:
+    null
+*/
+
+exports.sendVerificationEmail = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+
+    if (req.body && req.body.email && req.body.code) {
+
+      let email = req.body.email;
+      let code = req.body.code;
+
+      sgMail.setApiKey(process.env.REACT_APP_SENDGRID_API_KEY);
+
+      sgMail.send({
+        to: email,
+        replyTo: "hello@voicebridgeai.com",
+        from: "Voicebridge <hello@voicebridgeai.com>",
+        templateId: emailTemplates["VerificationEmail"],
+        dynamic_template_data: {
+          code: code,
+        }
+      })
+
+      res.status(200).send(JSON.stringify({ message: "Verification email sent" }));
+
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+
+  })
+});
+
+
+/*
   Webhook: Calls from Retell
 */
 

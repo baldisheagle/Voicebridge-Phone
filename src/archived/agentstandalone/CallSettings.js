@@ -51,7 +51,7 @@ export default function CallSettings() {
       setSmsNotifications(_agent.smsNotifications || '+14151234567');
     } else {
       setAgent(null);
-      navigate('/calls');
+      navigate('/dashboard');
     }
     setLoading(false);
   }

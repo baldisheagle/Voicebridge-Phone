@@ -17,7 +17,7 @@ export default function Profle() {
   useEffect(() => {
     if (auth && auth.user) {
       setUser(auth.user);
-      setFullName(auth.user.fullName);
+      setFullName(auth.user.fullName || '');
       setLoading(false);
     }
   }, [auth]);
@@ -52,10 +52,10 @@ export default function Profle() {
       <Heading size='4'>Profile</Heading>
       
 
-      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>  
+      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>  
 
       {/* Name */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Name</Text>
           <Text size="1" as='div' color='gray'>Your name</Text>

@@ -7,6 +7,8 @@ import { createRetellLlmAndAgentForReceptionist, updateRetellAgentForReceptionis
 // Create Retell LLM and Agent for Receptionist
 export const createReceptionist = async (_agent) => {
 
+    // console.log('Creating receptionist', _agent);
+
     // Create Retell LLM
     let llm = JSON.parse(JSON.stringify(RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM));
 

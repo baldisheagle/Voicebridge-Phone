@@ -38,7 +38,7 @@ export default function FAQ() {
         setAgent(agent);
         setFAQ(agent.faq || []);
       } else {
-        navigate('/calls');
+        navigate('/dashboard');
       }
     });
     setLoading(false);

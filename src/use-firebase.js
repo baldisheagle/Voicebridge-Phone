@@ -2,7 +2,12 @@ import React, { useState, useEffect, useContext, createContext } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAuth, signInWithPopup, onAuthStateChanged, signOut, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { sendVerificationEmail } from "./utilities/sendgrid";
+import { PHONE_RECEPTIONIST_TEMPLATE } from "./config/agenttemplates";
+import { dbCreateAgent } from "./utilities/database.js";
+import { v4 as uuidv4 } from 'uuid';
+import { createReceptionist } from "./utilities/receptionist";
 
 // PRODUCTION
 const app = initializeApp({
@@ -45,71 +50,107 @@ function useProvideAuth() {
     });
   };
 
-  const googleLogin = () => {
+  const googleLogin = async () => {
     setAuthenticating(true);
 
     signInWithPopup(auth, provider).then((result) => {
       // Get user
-      getDoc(doc(db, "users", result.user.uid)).then((userDoc) => {
+      getDoc(doc(db, "users", result.user.uid)).then(async (userDoc) => {
         if (userDoc.exists()) {
           // Set user
           setUser(userDoc.data());
+          
           // Get user's default workspace - workspace.id === user.uid
           getDoc(doc(db, "workspaces", userDoc.data().uid)).then((workspaceDoc) => {
             setWorkspace(workspaceDoc.data());
           });
+          
           setAuthenticating(false);
+          
           return true;
+
         } else {
+
           // Create user
-          setDoc(doc(db, "users", result.user.uid), {
+          await setDoc(doc(db, "users", result.user.uid), {
             uid: result.user.uid,
             email: result.user.email,
             fullName: result.user.displayName,
             photoUrl: result.user.photoURL,
             accessToken: result.user.accessToken,
+            emailVerified: true,
+            emailVerificationCode: null,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }).then(() => {
-            setUser({
-              uid: result.user.uid,
-              email: result.user.email,
-              fullName: result.user.displayName,
-              photoUrl: result.user.photoURL,
-              accessToken: result.user.accessToken,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-            // Create workspace
-            setDoc(doc(db, "workspaces", result.user.uid), {
-              id: result.user.uid,
-              name: 'My Workspace',
-              admins: [result.user.uid],
-              members: [result.user.uid],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }).then(() => {
-              setWorkspace({
-                id: result.user.uid,
-                name: 'My Workspace',
-                admins: [result.user.uid],
-                members: [result.user.uid],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              });
-              setAuthenticating(false);
-              return true;
-            }).catch((error) => { // Create workspace error
-              console.log("error", error);
-              setAuthenticating(false);
-              return false;
-            });
-          }).catch((error) => { // Create user error
-            console.log("error", error);
-            setAuthenticating(false);
-            return false;
+          })
+
+          setUser({
+            uid: result.user.uid,
+            email: result.user.email,
+            fullName: result.user.displayName,
+            photoUrl: result.user.photoURL,
+            accessToken: result.user.accessToken,
+            emailVerified: true,
+            emailVerificationCode: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           });
+
+          // Create workspace
+          await setDoc(doc(db, "workspaces", result.user.uid), {
+            id: result.user.uid,
+            name: 'My Workspace',
+            admins: [result.user.uid],
+            members: [result.user.uid],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          setWorkspace({
+            id: result.user.uid,
+            name: 'My Workspace',
+            admins: [result.user.uid],
+            members: [result.user.uid],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          // Create receptionist agent
+          let agentId = uuidv4();
+          let retellAgentCode = uuidv4();
+          let receptionistAgent = {
+            id: agentId,
+            retellAgentCode: retellAgentCode,
+            template: 'phone-receptionist',
+            name: 'Receptionist',
+            icon: PHONE_RECEPTIONIST_TEMPLATE.icon,
+            agentName: PHONE_RECEPTIONIST_TEMPLATE.name,
+            voiceId: PHONE_RECEPTIONIST_TEMPLATE.voiceId,
+            language: PHONE_RECEPTIONIST_TEMPLATE.language,
+            model: PHONE_RECEPTIONIST_TEMPLATE.model,
+            includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
+            businessInfo: PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
+            calCom: PHONE_RECEPTIONIST_TEMPLATE.calCom,
+            faq: [],
+            phoneNumber: null,
+            workspaceId: result.user.uid,
+            createdBy: result.user.uid,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+
+          await dbCreateAgent(receptionistAgent);
+
+          // Create receptionist retell agent
+          await createReceptionist(receptionistAgent);
+
+          // Wait 5 seconds
+          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          setAuthenticating(false);
+          return true;
         }
+        
       }).catch((error) => { // Get user error
         console.log("error", error);
         setAuthenticating(false);
@@ -120,6 +161,145 @@ function useProvideAuth() {
       setAuthenticating(false);
       return false;
     });
+  }
+
+  const emailLogin = async (email, password) => {
+    setAuthenticating(true);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Get user data
+      const userDoc = await getDoc(doc(db, "users", result.user.uid));
+      
+      if (userDoc.exists()) {
+        // Set user
+        setUser(userDoc.data());
+        // Get user's default workspace
+        const workspaceDoc = await getDoc(doc(db, "workspaces", userDoc.data().uid));
+        setWorkspace(workspaceDoc.data());
+        setAuthenticating(false);
+        return true;
+      } else {
+        console.error("User document not found");
+        setUser(false);
+        setAuthenticating(false);
+        return false;
+      }
+    } catch (error) {
+      console.error("Email login error:", error);
+      setAuthenticating(false);
+      return false;
+    }
+  }
+
+  const emailSignup = async (email, password) => {
+    setAuthenticating(true);
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Generate verification code
+      const emailVerificationCode = Math.floor(100000 + Math.random() * 900000);
+      
+      // Create user document
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        fullName: result.user.displayName,
+        photoUrl: result.user.photoURL,
+        accessToken: result.user.accessToken,
+        emailVerified: false,
+        emailVerificationCode: emailVerificationCode,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Create workspace document
+      await setDoc(doc(db, "workspaces", result.user.uid), {
+        id: result.user.uid,
+        name: 'My Workspace',
+        admins: [result.user.uid],
+        members: [result.user.uid],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      
+      // Set user and workspace
+      setUser({
+        uid: result.user.uid,
+        email: result.user.email,
+        fullName: result.user.displayName,
+        photoUrl: result.user.photoURL,
+        accessToken: result.user.accessToken,
+        emailVerified: false,
+        emailVerificationCode: emailVerificationCode,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Set workspace
+      setWorkspace({
+        id: result.user.uid,
+        name: 'My Workspace',
+        admins: [result.user.uid],
+        members: [result.user.uid],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Create receptionist agent
+      let agentId = uuidv4();
+      let retellAgentCode = uuidv4();
+      let receptionistAgent = {
+        id: agentId,
+        retellAgentCode: retellAgentCode,
+        template: 'phone-receptionist',
+        name: 'Receptionist',
+        icon: PHONE_RECEPTIONIST_TEMPLATE.icon,
+        agentName: PHONE_RECEPTIONIST_TEMPLATE.name,
+        voiceId: PHONE_RECEPTIONIST_TEMPLATE.voiceId,
+        language: PHONE_RECEPTIONIST_TEMPLATE.language,
+        model: PHONE_RECEPTIONIST_TEMPLATE.model,
+        includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
+        businessInfo: PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
+        calCom: PHONE_RECEPTIONIST_TEMPLATE.calCom,
+        faq: [],
+        phoneNumber: null,
+        workspaceId: result.user.uid,
+        createdBy: result.user.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      await dbCreateAgent(receptionistAgent);
+
+      // Create receptionist retell agent
+      await createReceptionist(receptionistAgent);
+
+      // Send verification email
+      await sendVerificationEmail(result.user.email, emailVerificationCode);
+
+      // Wait for 5 seconds
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      setAuthenticating(false);
+      console.log("Email signup successful!");
+      return true;
+
+    } catch (error) {
+      console.error("Email signup error:", error);
+      setAuthenticating(false);
+      return false;
+    }
+  }
+
+  const sendResetEmail = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return true;
+    } catch (error) {
+      console.error("Send reset email error:", error);
+      return false;
+    }
   }
 
   const updateUser = (_user) => {
@@ -157,6 +337,10 @@ function useProvideAuth() {
     updateUser,
     updateWorkspace,
     googleLogin,
+    emailLogin,
+    emailSignup, 
+    sendVerificationEmail,
+    sendResetEmail,
     authenticating,
   };
 

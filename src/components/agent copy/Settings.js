@@ -176,8 +176,8 @@ export default function CallSettings({ agent }) {
       {/* Include emergency disclaimer */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Include emergency disclaimer</Text>
-          <Text size="1" as='div' color='gray'>Make the agent say a disclaimer to call 911 if the caller is in an emergency.</Text>
+        <Text size="2" weight="bold">Make emergency disclaimer</Text>
+        <Text size="1" as='div' color='gray'>At the start of every call, the receptionist announces an emergency disclaimer to hangup and call 911 if the caller is in an emergency.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Switch variant="outline" size="2" checked={includeDisclaimer} onCheckedChange={(checked) => setIncludeDisclaimer(checked)} />

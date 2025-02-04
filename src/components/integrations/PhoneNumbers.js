@@ -148,8 +148,6 @@ export default function PhoneNumbers() {
 
     const deleteNumber = async () => {
 
-      console.log('Deleting number', number.id);
-
       try {
       
         // Check if number if associated with an agent
@@ -310,7 +308,7 @@ export default function PhoneNumbers() {
         </Col>
       </Row>
 
-      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
         {/* Phone numbers */}
         {phoneNumbers.length > 0 && (
           <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 20, marginBottom: 20 }}>

@@ -60,7 +60,7 @@ export default function Integrations() {
       </div>
 
 
-      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
         {activeTab === 'calendars' && (
           <Calendars />

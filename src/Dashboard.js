@@ -5,15 +5,13 @@ import { numberWithCommas, useMediaQuery } from './shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "./Theme.js";
 import { Heading, Spinner, Text, Card, Table, IconButton, Badge, ScrollArea, AlertDialog, Button, Link } from '@radix-ui/themes';
-import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight, Check, Checks, Phone, UserCircleGear } from '@phosphor-icons/react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dbCreateAgent, dbDeleteCall, dbGetAgents, dbGetCalls, dbGetPhoneNumbers } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
 import { CALL_PURPOSES } from './config/lists.js';
 import Moment from 'react-moment';
-import { PHONE_RECEPTIONIST_TEMPLATE } from './config/agenttemplates.js';
-import { v4 as uuidv4 } from 'uuid';
-import { createReceptionist } from './utilities/receptionist.js';
+
 export default function Dashboard() {
 
   const auth = useRequireAuth();
@@ -95,24 +93,24 @@ export default function Dashboard() {
 
       <Heading size='4'>Dashboard</Heading>
 
-      {/* <Button onClick={testRetellAgentCreate}>Test Create</Button> */}
+      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
-      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
-
-        {/* TODO: Onboarding steps */}
+        {/* Onboarding steps */}
         {(numPhoneNumbers === 0 || numAgents === 0) && (
-          <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
+          <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: -10 }}>
             <Col xs={12} sm={12} md={12} lg={12} style={{ padding: 10 }}>
-              <Heading size='3' style={{ color: 'var(--gray-11)' }}>Get started</Heading>
-              {/* Check if the workspace has at least one agent */}
-              {numAgents === 0 && (
-                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/receptionist')}>Create your receptionist</Link></Text>
-              )}
-              
-              {/* Check if the workspace has at least one phone number */}
-              {numPhoneNumbers === 0 && (
-                <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><ArrowRight weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/integrations')}>Connect a phone number</Link></Text>
-              )}
+              <Card>
+                <Heading size='3' style={{ color: 'var(--gray-11)' }}>Get started</Heading>
+                {/* Check if the workspace has at least one agent */}
+                {numAgents === 0 && (
+                  <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><UserCircleGear weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/receptionist')}>Create your receptionist <ArrowRight weight="bold" size={12} /></Link></Text>
+                )}
+
+                {/* Check if the workspace has at least one phone number */}
+                {numPhoneNumbers === 0 && (
+                  <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><Phone weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/phone-numbers')}>Buy a phone number <ArrowRight weight="bold" size={12} /></Link></Text>
+                )}
+              </Card>
             </Col>
           </Row>
         )}
@@ -130,9 +128,9 @@ export default function Dashboard() {
           <Col xs={6} sm={6} md={4} lg={4} xl={3} style={{ padding: 10 }}>
             <Card>
               <Row style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 0, height: 80 }}>
-                <Text size="2" weight="bold" as="div" style={{ color: 'var(--gray-11)' }}>Total Time</Text>
+                <Text size="2" weight="bold" as="div" style={{ color: 'var(--gray-11)' }}>Total Minutes</Text>
                 <Text size="6" weight="bold" as="div" style={{ color: 'var(--gray-12)', marginTop: 5 }}>
-                  {totalTime} mins
+                  {totalTime}
                 </Text>
               </Row>
             </Card>

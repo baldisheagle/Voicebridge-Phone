@@ -34,7 +34,7 @@ export default function Profile() {
     return null;
   }
 
-  if (location.pathname === '/onboarding' || location.pathname === '/') {
+  if (location.pathname === '/') {
     return (
       <div></div>
     )
@@ -50,7 +50,7 @@ export default function Profile() {
               size="2"
               variant="soft"
               radius="large"
-              fallback={user.fullName ? user.fullName.charAt(0) : 'P'}
+              fallback={user.fullName ? user.fullName.charAt(0) : 'V'}
             />
           </IconButton>
         </DropdownMenu.Trigger>

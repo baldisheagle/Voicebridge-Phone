@@ -13,7 +13,7 @@ export default function SidebarComponent(props) {
 
   let isPageWide = useMediaQuery('(min-width: 960px)');
 
-  if (location.pathname === '/onboarding' || location.pathname === '/') {
+  if (location.pathname === '/onboarding' || location.pathname === '/' || location.pathname === '/signup' || location.pathname === '/login' || location.pathname === '/forgot-password' || location.pathname === '/verify-email' || location.pathname === '/onboarding') {
     return (
       <div></div>
     )

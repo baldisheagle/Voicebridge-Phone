@@ -79,8 +79,6 @@ export default function PhoneNumbers() {
 
         const deleteNumber = async () => {
 
-            console.log('Deleting number', number.id);
-
             try {
 
                 // Check if number if associated with an agent
@@ -227,18 +225,19 @@ export default function PhoneNumbers() {
 
             <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
                 <Col xs={6} sm={6} md={6} lg={6} xl={6} style={{ padding: 10 }}>
-                    <Text size="1" color='gray'>{phoneNumbers.length} phone numbers</Text>
+                    <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-12)', marginBottom: 10, marginTop: 0 }}>{phoneNumbers.length} phone numbers</Text>
                 </Col>
                 <Col xs={6} sm={6} md={6} lg={6} xl={6} style={{ padding: 10, textAlign: 'right' }}>
-                    <Button variant="solid" onClick={() => setBuyNumberDialogOpen(true)}><Plus /> Buy New number</Button>
+                    {/* Workspace must be limited to 1 active number */}
+                    <Button variant="solid" onClick={() => setBuyNumberDialogOpen(true)} disabled={phoneNumbers.length >= 1}><Plus /> Buy New number</Button>
                 </Col>
             </Row>
 
 
-            <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+            <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
                 {phoneNumbers.length > 0 && (
-                    <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 20, marginBottom: 20 }}>
+                    <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'stretch', marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 20 }}>
                         {phoneNumbers.map((phoneNumber, index) => (
                             <Col key={index} xs={12} sm={6} md={4} lg={4}>
                                 <Number number={phoneNumber} updatePhoneNumberName={updatePhoneNumberName} onDeletePhoneNumber={onDeletePhoneNumber} />
@@ -255,14 +254,14 @@ export default function PhoneNumbers() {
                             <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
                         </VisuallyHidden>
 
-                        <Callout.Root>
+                        {/* <Callout.Root>
                             <Callout.Icon>
                                 <Info weight="bold" />
                             </Callout.Icon>
                             <Callout.Text as="div">
                                 Each number costs $10/month. You can cancel at any time.
                             </Callout.Text>
-                        </Callout.Root>
+                        </Callout.Root> */}
 
                         <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
                         <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the 3-digit area code you want to buy a number in (US only).</Text>

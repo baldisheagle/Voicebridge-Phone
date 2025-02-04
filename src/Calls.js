@@ -1,9 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useRequireAuth } from './use-require-auth.js';
-import { getFirstName, useMediaQuery } from './shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
-import { ThemeContext } from "./Theme.js";
 import { Text, Heading, Spinner, Table, IconButton, Button, Badge, ScrollArea, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import Moment from 'react-moment';
@@ -11,14 +8,11 @@ import { CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash } from '@phosph
 import { dbDeleteCall, dbGetCalls } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
 import { CALL_PURPOSES } from './config/lists.js';  
+import { SAMPLE_CALLS } from './config/demo.js';
 
 export default function Calls() {
 
   const auth = useRequireAuth();
-
-  const navigate = useNavigate();
-  const { theme } = useContext(ThemeContext);
-  let isPageWide = useMediaQuery('(min-width: 960px)');
 
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +33,7 @@ export default function Calls() {
     const calls = await dbGetCalls(auth.workspace.id);
     if (calls) {
       setCalls(calls.sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
+      // setCalls(SAMPLE_CALLS);
     }
 
     setLoading(false);
@@ -93,10 +88,15 @@ export default function Calls() {
 
       <Heading size='4'>Calls</Heading>
 
-      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
           <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 10 }}>
+            {calls.length === 0 && (
+              <div>
+                <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-12)', marginBottom: 10, marginTop: 0 }}>No calls received yet</Text>
+              </div>
+            )}
             {calls.length > 0 && (
               <div>
                 {Object.entries(groupCallsByDay(calls)).map(([date]) => (

@@ -37,7 +37,7 @@ export default function Questions() {
         setAgent(agent);
         setQuestions(agent.questions || []);
       } else {
-        navigate('/calls');
+        navigate('/dashboard');
       }
     });
     setLoading(false);

@@ -144,7 +144,7 @@ export default function Agent() {
         </div>
 
 
-      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 300, overflow: 'auto', height: 'calc(100vh - 40px)' }}>
+      <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 300, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
         {activeTab === 'settings' && (    
           <Settings agent={agent} />

@@ -2,10 +2,10 @@
 <svg width="71px" height="62px" viewBox="0 0 71 62" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>Group</title>
     <g id="Brand" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="Artboard-Copy-5" transform="translate(-18.000000, -23.000000)" fill="#000000">
+        <g id="Artboard-Copy-6" transform="translate(-18.000000, -23.000000)" fill="#FFFFFF">
             <g id="Group" transform="translate(18.000000, 23.000000)">
-                <polygon id="Path-3" points="-4.99112946e-14 9.35836774e-14 20.3265888 9.35836774e-14 40.6531776 61.7437485 20.3265888 61.7437485"></polygon>
-                <polygon id="Path-3-Copy-2" transform="translate(50.180247, 14.926829) scale(-1, 1) translate(-50.180247, -14.926829) " points="29.8536585 0 50.1802473 0 70.5068361 29.8536585 50.1802473 29.8536585"></polygon>
+                <polygon id="Path-3" points="7.81597009e-14 2.84217094e-14 20.3265888 2.84217094e-14 40.6531776 61.7437485 20.3265888 61.7437485"></polygon>
+                <polygon id="Path-3-Copy-2" transform="translate(50.180247, 14.926829) scale(-1, 1) translate(-50.180247, -14.926829) " points="29.8536585 6.75015599e-14 50.1802473 6.75015599e-14 70.5068361 29.8536585 50.1802473 29.8536585"></polygon>
                 <polygon id="Path-3-Copy-8" transform="translate(50.180247, 45.658537) scale(1, -1) translate(-50.180247, -45.658537) " points="29.8536585 29.8536585 50.1802473 29.8536585 70.5068361 61.4634146 50.1802473 61.4634146"></polygon>
             </g>
         </g>
