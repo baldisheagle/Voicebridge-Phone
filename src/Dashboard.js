@@ -125,7 +125,7 @@ export default function Dashboard() {
                       <Phone weight="bold" size={16} />
                     </Callout.Icon>
                     <Callout.Text style={{ marginBottom: 0 }}>
-                      <Link onClick={() => navigate('/settings')} style={{ textDecoration: numPhoneNumbers > 0 ? 'line-through' : 'none', cursor: 'pointer' }}>Set up your business <ArrowRight weight="bold" size={12} /></Link>
+                      <Link onClick={() => navigate('/settings')} style={{ textDecoration: numPhoneNumbers > 0 ? 'line-through' : 'none', cursor: 'pointer' }}>Buy a phone number <ArrowRight weight="bold" size={12} /></Link>
                     </Callout.Text>
                 </Callout.Root>
 

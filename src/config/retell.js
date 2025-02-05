@@ -265,7 +265,7 @@ Maintain the highest standards of professional communication. Use appropriate, p
     enable_backchannel: true,
     interruption_sensitivity: 0.8,
     agent_name: '[[AGENT_NAME]]',
-    ambient_sound: 'coffee-shop',
+    ambient_sound: '[[AMBIENT_SOUND]]',
     enable_backchannel: true,
     language: '[[LANGUAGE]]',
     opt_out_sensitive_data_storage: false,

@@ -24,7 +24,6 @@ export const CALENDARS = [
 ];
 
 export const AMBIENT_SOUNDS = [
-    { value: 'none', label: 'None' },
     { value: 'coffee-shop', label: 'Coffee Shop' },
     { value: 'call-center', label: 'Call Center' },
 ];

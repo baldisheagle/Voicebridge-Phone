@@ -22,7 +22,7 @@ export default function Settings() {
   const [workspacePhoneNumber, setWorkspacePhoneNumber] = useState('');
   const [workspaceEmail, setWorkspaceEmail] = useState('');
   const [workspaceAddress, setWorkspaceAddress] = useState('');
-  const [workspaceAbout, setWorkspaceAbout] = useState('');
+  const [workspaceDescription, setWorkspaceDescription] = useState('');
 
   // Phone number settings
   const [buyNumberAreaCode, setBuyNumberAreaCode] = useState('');
@@ -46,11 +46,11 @@ export default function Settings() {
   const initialize = async() => {
 
     setWorkspaceName(auth.workspace.name);
-    setWorkspaceWebsite(auth.workspace.website);
-    setWorkspacePhoneNumber(auth.workspace.phoneNumber);
-    setWorkspaceEmail(auth.workspace.email);
-    setWorkspaceAddress(auth.workspace.address);
-    setWorkspaceAbout(auth.workspace.about);
+    setWorkspaceWebsite(auth.workspace.businessInfo?.website);
+    setWorkspacePhoneNumber(auth.workspace.businessInfo?.phone);
+    setWorkspaceEmail(auth.workspace.businessInfo?.email);
+    setWorkspaceAddress(auth.workspace.businessInfo?.location);
+    setWorkspaceDescription(auth.workspace.businessInfo?.description);
 
     // Get phone numbers
     let phoneNumbers = await dbGetPhoneNumbers(auth.workspace.id);
@@ -80,10 +80,10 @@ export default function Settings() {
       ...auth.workspace,
       name: workspaceName ? workspaceName.slice(0, 100).trim() : '',
       website: workspaceWebsite ? workspaceWebsite.slice(0, 1000).trim() : '',
-      phoneNumber: workspacePhoneNumber ? workspacePhoneNumber.slice(0, 1000).trim() : '',
+      phone: workspacePhoneNumber ? workspacePhoneNumber.slice(0, 1000).trim() : '',
       email: workspaceEmail ? workspaceEmail.slice(0, 1000).trim() : '',
-      address: workspaceAddress ? workspaceAddress.slice(0, 1000).trim() : '',
-      about: workspaceAbout ? workspaceAbout.slice(0, 1000).trim() : ''
+      location: workspaceAddress ? workspaceAddress.slice(0, 1000).trim() : '',
+      description: workspaceDescription ? workspaceDescription.slice(0, 1000).trim() : ''
     }
     
     let res = await dbUpdateWorkspace(auth.workspace.id, _workspace);
@@ -361,7 +361,7 @@ export default function Settings() {
             <Text size="1" as='div' color='gray'>A short description of your business.</Text>
           </Col>
           <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
-            <TextArea variant="surface" placeholder="We are a small business that sells widgets." rows={4} maxLength={1000} value={workspaceAbout} onChange={(e) => setWorkspaceAbout(e.target.value)} />
+            <TextArea variant="surface" placeholder="We are a small business that sells widgets." rows={4} maxLength={1000} value={workspaceDescription} onChange={(e) => setWorkspaceDescription(e.target.value)} />
           </Col>
         </Row>
 

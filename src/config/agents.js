@@ -9,7 +9,7 @@ export const PHONE_RECEPTIONIST_TEMPLATE = {
     model: "gpt-4o",
     includeDisclaimer: true,
     calendar: "cal.com",
-    ambientSound: "none",
+    ambientSound: "coffee-shop",
     boostedKeywords: "",
     endCallOnSilence: 10,
     maxDuration: 10,

@@ -12,6 +12,8 @@ export function useRequireAuth(redirectUrl = '/'){
       navigate(redirectUrl)
     } else if (auth.user && !auth.user.emailVerified) {
       navigate('/verify-email')
+    } else if (auth.user && auth.workspace && !auth.workspace.onboarded) {
+      navigate('/onboarding')
     }
   }, [auth]);
 

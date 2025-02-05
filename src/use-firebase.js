@@ -95,18 +95,20 @@ function useProvideAuth() {
           // Create workspace
           await setDoc(doc(db, "workspaces", result.user.uid), {
             id: result.user.uid,
-            name: 'My Workspace',
+            name: 'My business',
             admins: [result.user.uid],
             members: [result.user.uid],
+            onboarded: false,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
 
           setWorkspace({
             id: result.user.uid,
-            name: 'My Workspace',
+            name: 'My business',
             admins: [result.user.uid],
             members: [result.user.uid],
+            onboarded: false,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
@@ -183,9 +185,10 @@ function useProvideAuth() {
       // Create workspace document
       await setDoc(doc(db, "workspaces", result.user.uid), {
         id: result.user.uid,
-        name: 'My Workspace',
+        name: 'My business',
         admins: [result.user.uid],
         members: [result.user.uid],
+        onboarded: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -206,9 +209,10 @@ function useProvideAuth() {
       // Set workspace
       setWorkspace({
         id: result.user.uid,
-        name: 'My Workspace',
+        name: 'My business',
         admins: [result.user.uid],
         members: [result.user.uid],
+        onboarded: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

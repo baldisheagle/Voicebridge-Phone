@@ -20,8 +20,17 @@ export default function Login(props) {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (auth.user) {
+    if (auth && auth.user && auth.workspace) {
       navigate('/dashboard');
+      if (auth.user.emailVerified) {
+        if (auth.workspace.onboarded) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
+      } else {
+        navigate('/verify-email');
+      }
     }
     window.scrollTo(0,0);
   }, [auth]);

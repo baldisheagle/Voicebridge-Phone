@@ -20,8 +20,16 @@ export default function Signup(props) {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (auth.user) {
-      navigate('/dashboard');
+    if (auth.user && auth.workspace) {
+      if (auth.user.emailVerified) {
+        if (auth.workspace.onboarded) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
+      } else {
+        navigate('/verify-email');
+      }
     }
     window.scrollTo(0,0);
   }, [auth]);

@@ -48,8 +48,6 @@ export default function App() {
                   {/* Main */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calls" element={<Calls />} />
-                  {/* <Route path="/agents" element={<Agents />} /> */}
-                  {/* <Route path="/agent/:agentId" element={<Agent />} /> */}
                   <Route path="/receptionist" element={<Receptionist />} />
                   {/* <Route path="/phone-numbers" element={<PhoneNumbers />} /> */}
                   <Route path="/business" element={<Business />} />

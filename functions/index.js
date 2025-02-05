@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { Retell } = require("retell-sdk");
+const z = require('zod');
 
 // Firebase
 const { onRequest } = require("firebase-functions/v2/https");
@@ -15,6 +16,9 @@ const logger = require("firebase-functions/logger");
 
 // Sendgrid
 const sgMail = require('@sendgrid/mail');
+
+// Mendable
+const { default: FirecrawlApp } = require('@mendable/firecrawl-js');
 
 // Dotenv
 require('dotenv').config();
@@ -623,6 +627,72 @@ exports.connectRetellPhoneNumberToAgent = onRequest((req, res) => {
   });
 
 });
+
+/*
+  Function: Firecrawl Extract
+  Parameters:
+    url
+  Return:
+    null
+*/
+
+exports.firecrawlExtract = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req.body && req.body.url) {
+
+      console.log('Firecrawl Extract', req.body);
+
+      const url = req.body.url;
+
+      // if (!validateUrl(url)) {
+      //   console.error('Invalid URL', url);
+      //   res.status(400).send(JSON.stringify({ error: "Invalid URL" }));
+      //   return;
+      // }
+
+      try {
+
+        const app = new FirecrawlApp({ apiKey: process.env.REACT_APP_FIRECRAWL_API_KEY });
+
+        const schema = z.object({
+          business_location: z.string(),
+          phone_number: z.string(),
+          email: z.string(),
+          services_offered: z.array(z.string()),
+          insurance_accepted: z.array(z.string()),
+          business_summary: z.string()
+        });
+
+        const extractResult = await app.extract([
+          url
+        ], {
+          prompt: "Extract the business location, phone number, email, services offered, insurance accepted, and a summary of the business from the page.",
+          schema,
+        });
+
+        // console.log('Firecrawl response', extractResult);
+
+        res.status(200).send(JSON.stringify(extractResult));
+        return;
+
+      } catch (error) {
+        console.error('Error extracting data', error);
+        res.status(500).send(JSON.stringify({ error: "Error extracting data" }));
+        return;
+      }
+
+    } else {
+      console.error('Missing parameters', req.body);
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+      return;
+    }
+
+  });
+
+});
+
 
 /*
   Function: Create Retell Agent

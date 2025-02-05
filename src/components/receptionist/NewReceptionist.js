@@ -33,12 +33,24 @@ export default function NewReceptionist({ onInitReceptionist }) {
     const [ambientSound, setAmbientSound] = useState(PHONE_RECEPTIONIST_TEMPLATE.ambientSound);
     const [boostedKeywords, setBoostedKeywords] = useState(PHONE_RECEPTIONIST_TEMPLATE.boostedKeywords);
     const [loading, setLoading] = useState(true);
+    const [loadingReceptionist, setLoadingReceptionist] = useState(false);
 
     useEffect(() => {
         if (auth && auth.user && auth.workspace) {
-            setLoading(false);
+            initialize();
         }
     }, [auth]);
+
+    const initialize = async () => {
+        setLoading(true);
+        setBusinessName(auth.workspace.name ? auth.workspace.name : 'My business');
+        setDescription(auth.workspace.businessInfo.description ? auth.workspace.businessInfo.description : '');
+        setWebsite(auth.workspace.businessInfo.website ? auth.workspace.businessInfo.website : '');
+        setLocation(auth.workspace.businessInfo.location ? auth.workspace.businessInfo.location : '');
+        setServices(auth.workspace.businessInfo.services ? auth.workspace.businessInfo.services : '');
+        setInsuranceAccepted(auth.workspace.businessInfo.insurance ? auth.workspace.businessInfo.insurance : '');
+        setLoading(false);
+    }
 
     const initReceptionist = async () => {
 
@@ -77,7 +89,7 @@ export default function NewReceptionist({ onInitReceptionist }) {
                 eventId: eventId ? eventId : PHONE_RECEPTIONIST_TEMPLATE.calCom.eventId,
             },
             faq: [],
-            phoneNumber: phoneNumber || null,
+            phoneNumber: null,
             workspaceId: auth.workspace.id,
             createdBy: auth.user.uid,
             createdAt: new Date().toISOString(),
@@ -89,15 +101,19 @@ export default function NewReceptionist({ onInitReceptionist }) {
         let res = await dbCreateAgent(_agent);
 
         if (res) {
+            setLoadingReceptionist(true);
             let retellRes = await createReceptionist(_agent);
             if (retellRes) {
                 toast.success('Receptionist created');
                 onInitReceptionist(_agent);
             } else {
                 toast.error('Error creating receptionist');
+                // TODO: Delete agent from database
+                setLoadingReceptionist(false);
             }
         } else {
             toast.error('Error creating agent');
+            setLoadingReceptionist(false);
         }
     }
 
@@ -250,9 +266,18 @@ export default function NewReceptionist({ onInitReceptionist }) {
 
                     {/* Navigation buttons */}
                     <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
-                        <Button variant="soft" color="gray" onClick={() => step > 1 ? setStep(step - 1) : null} disabled={step === 1}>
-                            Back
-                        </Button>
+                        {step === 1 && (
+                            <Dialog.Close asChild>
+                                <Button variant="soft" color="gray">
+                                    Cancel
+                                </Button>
+                            </Dialog.Close>
+                        )}
+                        {step > 1 && (  
+                            <Button variant="soft" color="gray" onClick={() => step > 1 ? setStep(step - 1) : null} disabled={step === 1}>
+                                Back
+                            </Button>
+                        )}
                         {loading ? (
                             <div></div>
                         ) : (
