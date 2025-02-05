@@ -79,7 +79,7 @@ export default function EpicCallback() {
       <Row style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginLeft: 0, marginRight: 0, height: '80vh' }}>
         <Spinner size="2" />
       </Row>
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 

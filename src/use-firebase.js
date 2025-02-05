@@ -4,10 +4,6 @@ import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth, signInWithPopup, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { sendVerificationEmail } from "./utilities/sendgrid";
-import { PHONE_RECEPTIONIST_TEMPLATE } from "./config/agents.js";
-import { dbCreateAgent } from "./utilities/database.js";
-import { v4 as uuidv4 } from 'uuid';
-import { createReceptionist } from "./utilities/receptionist";
 
 // PRODUCTION
 const app = initializeApp({
@@ -115,35 +111,6 @@ function useProvideAuth() {
             updatedAt: new Date(),
           });
 
-          // Create receptionist agent
-          let agentId = uuidv4();
-          let retellAgentCode = uuidv4();
-          let receptionistAgent = {
-            id: agentId,
-            retellAgentCode: retellAgentCode,
-            template: 'phone-receptionist',
-            name: 'Receptionist',
-            icon: PHONE_RECEPTIONIST_TEMPLATE.icon,
-            agentName: PHONE_RECEPTIONIST_TEMPLATE.name,
-            voiceId: PHONE_RECEPTIONIST_TEMPLATE.voiceId,
-            language: PHONE_RECEPTIONIST_TEMPLATE.language,
-            model: PHONE_RECEPTIONIST_TEMPLATE.model,
-            includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
-            businessInfo: PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
-            calCom: PHONE_RECEPTIONIST_TEMPLATE.calCom,
-            faq: [],
-            phoneNumber: null,
-            workspaceId: result.user.uid,
-            createdBy: result.user.uid,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-
-          await dbCreateAgent(receptionistAgent);
-
-          // Create receptionist retell agent
-          await createReceptionist(receptionistAgent);
-
           // Wait 5 seconds
           await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -245,35 +212,6 @@ function useProvideAuth() {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
-      // Create receptionist agent
-      let agentId = uuidv4();
-      let retellAgentCode = uuidv4();
-      let receptionistAgent = {
-        id: agentId,
-        retellAgentCode: retellAgentCode,
-        template: 'phone-receptionist',
-        name: 'Receptionist',
-        icon: PHONE_RECEPTIONIST_TEMPLATE.icon,
-        agentName: PHONE_RECEPTIONIST_TEMPLATE.name,
-        voiceId: PHONE_RECEPTIONIST_TEMPLATE.voiceId,
-        language: PHONE_RECEPTIONIST_TEMPLATE.language,
-        model: PHONE_RECEPTIONIST_TEMPLATE.model,
-        includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
-        businessInfo: PHONE_RECEPTIONIST_TEMPLATE.businessInfo,
-        calCom: PHONE_RECEPTIONIST_TEMPLATE.calCom,
-        faq: [],
-        phoneNumber: null,
-        workspaceId: result.user.uid,
-        createdBy: result.user.uid,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-
-      await dbCreateAgent(receptionistAgent);
-
-      // Create receptionist retell agent
-      await createReceptionist(receptionistAgent);
 
       // Send verification email
       await sendVerificationEmail(result.user.email, emailVerificationCode);

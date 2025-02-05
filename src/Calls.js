@@ -94,7 +94,23 @@ export default function Calls() {
           <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 10 }}>
             {calls.length === 0 && (
               <div>
-                <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-12)', marginBottom: 10, marginTop: 0 }}>No calls received yet</Text>
+                <Text size="2" weight="bold" as='div' style={{ color: 'var(--gray-12)', marginBottom: 10, marginTop: 0, marginBottom: 20 }}>No calls received yet</Text>
+                <Table.Root>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeaderCell>Time</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>From</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>To</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Caller</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Purpose</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Sentiment</Table.ColumnHeaderCell>
+                    </Table.Row>
+                  </Table.Header>
+
+                  <Table.Body>
+
+                  </Table.Body>
+                </Table.Root>
               </div>
             )}
             {calls.length > 0 && (
@@ -222,7 +238,7 @@ export default function Calls() {
         </Row>
 
       </div>
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 

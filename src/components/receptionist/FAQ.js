@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
 import { Button, Spinner, Text, Dialog, TextArea, Card, IconButton, AlertDialog } from '@radix-ui/themes';
@@ -12,8 +11,6 @@ import { updateReceptionistLlm } from '../../utilities/receptionist.js';
 export default function FAQ({ agent }) {
 
   const auth = useRequireAuth();
-
-  const navigate = useNavigate();
 
   const [faq, setFAQ] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -125,9 +122,12 @@ export default function FAQ({ agent }) {
                 onChange={(e) => setAnswer(e.target.value)}
               />
 
-              <Row style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 10 }}>
+              <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
                 <Dialog.Close>
-                  <Button onClick={() => updateFAQ(faq.id, question, answer)}>Save</Button>
+                  <Button variant="soft" color="gray">Cancel</Button>
+                </Dialog.Close>
+                <Dialog.Close>
+                  <Button variant="solid" style={{ marginLeft: 10 }} onClick={() => updateFAQ(faq.id, question, answer)}>Save</Button>
                 </Dialog.Close>
               </Row>
             </Dialog.Content>
@@ -149,7 +149,7 @@ export default function FAQ({ agent }) {
                   <Button variant="soft" color="gray">Cancel</Button>
                 </AlertDialog.Cancel>
                 <AlertDialog.Action>
-                  <Button variant="solid" color="red" onClick={() => deleteFAQ(faq.id)}>Delete</Button>
+                  <Button variant="solid" style={{ marginLeft: 10 }} color="red" onClick={() => deleteFAQ(faq.id)}>Delete</Button>
                 </AlertDialog.Action>
               </Row>
             </AlertDialog.Content>
@@ -221,9 +221,9 @@ export default function FAQ({ agent }) {
 
       {/* FAQ */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
-        <Col xs={12} sm={12} md={12} lg={9} xl={7} style={{ padding: 10 }}>
+        <Col xs={12} sm={12} md={12} lg={8} xl={7} style={{ padding: 10 }}>
           {faq.length > 0 && (
-            <div style={{ marginTop: 20, width: '100%' }}>
+            <div style={{ marginTop: 0, width: '100%' }}>
               {faq.map((faq, index) => (
                 <FAQ key={index} faq={faq} />
               ))}
@@ -232,7 +232,7 @@ export default function FAQ({ agent }) {
         </Col>
       </Row>
 
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 

@@ -1,14 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useRequireAuth } from './use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
-import { Heading, Spinner, Text, TextField, Button, Separator, TextArea, Card } from '@radix-ui/themes';
+import { Heading, Spinner, Text, TextField, Button, Separator, TextArea, Dialog, VisuallyHidden, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { dbUpdateWorkspace } from './utilities/database.js';
-import { ArrowDown, Trash, Hourglass, ArrowClockwise } from '@phosphor-icons/react';
+import { dbDeletePhoneNumber, dbGetAgents, dbGetPhoneNumbers, dbUpdateWorkspace } from './utilities/database.js';
+import { ArrowDown, Trash, Hourglass, ArrowClockwise, Phone, Copy } from '@phosphor-icons/react';
 import { BILLING_PLANS, BILLING_PLAN_STARTER_STRIPE_PRICE_ID, BILLING_PLAN_PRO_STRIPE_PRICE_ID, BILLING_PLAN_GROWTH_STRIPE_PRICE_ID } from './config/billing.js';
 import { stripeCreateCustomer, stripeGetCheckoutSession, stripeGetCustomerPortalSession, stripeGetSubscription } from './utilities/stripe.js';
-// import Billing from './components/settings/Billing.js';
-// import Workspace from './components/settings/Workspace.js';
+import { buyRetellPhoneNumber, deleteRetellPhoneNumber } from './utilities/retell.js';
+import { dbAddPhoneNumber } from './utilities/database.js';
+import { v4 as uuidv4 } from 'uuid';  
+import { formatPhoneNumber } from './helpers/string.js';
+
 export default function Settings() {
 
   const auth = useRequireAuth();
@@ -20,6 +23,13 @@ export default function Settings() {
   const [workspaceEmail, setWorkspaceEmail] = useState('');
   const [workspaceAddress, setWorkspaceAddress] = useState('');
   const [workspaceAbout, setWorkspaceAbout] = useState('');
+
+  // Phone number settings
+  const [buyNumberAreaCode, setBuyNumberAreaCode] = useState('');
+  const [buyNumberNickname, setBuyNumberNickname] = useState('My number');
+  const [phoneNumbers, setPhoneNumbers] = useState([]);
+  const [buyNumberDialogOpen, setBuyNumberDialogOpen] = useState(false);
+
   // Stripe
   const [currentPlan, setCurrentPlan] = useState(null);
   const [plans, setPlans] = useState(BILLING_PLANS);
@@ -34,12 +44,19 @@ export default function Settings() {
 
   // Initialize
   const initialize = async() => {
+
     setWorkspaceName(auth.workspace.name);
     setWorkspaceWebsite(auth.workspace.website);
     setWorkspacePhoneNumber(auth.workspace.phoneNumber);
     setWorkspaceEmail(auth.workspace.email);
     setWorkspaceAddress(auth.workspace.address);
     setWorkspaceAbout(auth.workspace.about);
+
+    // Get phone numbers
+    let phoneNumbers = await dbGetPhoneNumbers(auth.workspace.id);
+    if (phoneNumbers) {
+      setPhoneNumbers(phoneNumbers);
+    }
 
     // Get current plan
     if (!auth.workspace.stripe_customer_id || // If no customer id, set to free
@@ -172,6 +189,76 @@ export default function Settings() {
     setLoading(false);
   }
 
+  // Buy number
+  const buyNumber = async () => {
+
+    try {
+    
+      let newNumber = await buyRetellPhoneNumber(buyNumberAreaCode, buyNumberNickname);
+      if (newNumber) {
+        // Add phone number to phone numbers database
+        let uuid = uuidv4();
+        let phoneNumber = {
+            id: uuid,
+            name: buyNumberNickname,
+            number: newNumber.phone_number || null,
+            areaCode: buyNumberAreaCode || null,
+            type: 'bought',
+            lastModificationTimestamp: newNumber.last_modification_timestamp || null,
+            workspaceId: auth.workspace.id,
+            createdBy: auth.user.uid,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        }
+        let res = await dbAddPhoneNumber(phoneNumber);
+        if (res) {
+            toast.success('Phone number bought');
+            setBuyNumberAreaCode('');
+            setBuyNumberNickname('');
+            setPhoneNumbers([...phoneNumbers, phoneNumber]);
+        } else {
+            toast.error('Error buying phone number');
+        }
+      } else {
+        toast.error('Error buying phone number');
+      }
+
+    } catch (error) {
+      console.error('Error buying phone number', error);
+      toast.error('Error buying phone number');
+    }
+  }
+
+  const deleteNumber = async (number) => {
+
+    try {
+
+      // Check if number if associated with an agent
+      let agents = await dbGetAgents(auth.workspace.id);
+      let agent = agents.find(a => a.phoneNumber === number.id);
+      if (agent) {
+          toast.error('Cannot delete a phone number associated with a receptionist');
+          return;
+      }
+
+      // Delete phone number from database
+      let res = await dbDeletePhoneNumber(number.id, auth.workspace.id);
+      if (res) {
+          toast.success('Phone number deleted');
+          // Delete phone number from Retell
+          await deleteRetellPhoneNumber(number.number);
+          setPhoneNumbers(phoneNumbers.filter(n => n.id !== number.id));
+      } else {
+          toast.error('Error deleting phone number');
+      }
+
+    } catch (error) {
+        console.error('Error deleting phone number', error);
+        toast.error('Error deleting phone number');
+    }
+
+  }
+
   const deleteAccount = async () => {
     // let res = await dbDeleteUser(auth.user.id);
     // if (res) {
@@ -204,31 +291,8 @@ export default function Settings() {
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
       
       <Heading size='4'>Settings</Heading>
-      
-      {/* Tabs */}
-      {/* <div style={{ width: '100%', marginTop: 10 }}>
-        <TabNav.Root>
-          <TabNav.Link href='#' active={activeTab === 'workspace'} onClick={() => setActiveTab('workspace')}>
-            Workspace
-          </TabNav.Link>
-          <TabNav.Link href='#' active={activeTab === 'account'} onClick={() => setActiveTab('account')}>
-            Account
-          </TabNav.Link>
-          <TabNav.Link href='#' active={activeTab === 'billing'} onClick={() => setActiveTab('billing')}>
-            Billing
-          </TabNav.Link>
-        </TabNav.Root>
-      </div> */}
 
       <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100, paddingBottom: 100 }}>  
-
-        {/* {activeTab === 'billing' && (
-          <Billing />
-        )}
-
-        {activeTab === 'workspace' && (
-          <Workspace />
-        )} */}
 
         {/* Workspace */}
 
@@ -308,9 +372,95 @@ export default function Settings() {
           </Col>
         </Row>
 
+        {/* Phone number */}
 
+        <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Phone number</Heading>
+        <Separator style={{ width: '100%' }} />
+
+        <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
+          <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+            <Text size="2" weight="bold">Phone number</Text>
+            <Text size="1" as='div' color='gray'>Your receptionist phone number.</Text>
+          </Col>
+          <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+            {phoneNumbers.length === 0 ? (
+              <Dialog.Root open={buyNumberDialogOpen} onOpenChange={setBuyNumberDialogOpen}>
+                <Dialog.Trigger>
+                  <Button variant="surface">
+                    <Phone size={16} /> Buy number
+                </Button>
+              </Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Title>Buy number</Dialog.Title>
+                <VisuallyHidden>
+                  <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
+                </VisuallyHidden>
+
+                <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
+                <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the 3-digit area code you want to buy a number in (US only).</Text>
+                <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} />
+
+                <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
+                <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
+                <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
+
+                <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
+                  <Dialog.Close>
+                    <Button variant="soft" color="gray">
+                      Cancel
+                    </Button>
+                  </Dialog.Close>
+                  <Dialog.Close>
+                    <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberAreaCode.length !== 3 || buyNumberNickname.length === 0 || loading}>
+                      Buy number
+                    </Button>
+                  </Dialog.Close>
+                </Row>
+
+              </Dialog.Content>
+
+              </Dialog.Root>
+            ) : (
+              <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
+                <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ padding: 0, paddingLeft: 10 }}>
+                  <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 0 }}>
+                    <Text size="4" as='div' color='gray' style={{ marginRight: 10 }}>{formatPhoneNumber(phoneNumbers[0].number)}</Text>
+                    <Button variant="ghost" color="gray" size="1" onClick={() => {
+                      navigator.clipboard.writeText(phoneNumbers[0].number);
+                      toast.success('Copied to clipboard');
+                    }}>
+                      <Copy size={16} />
+                    </Button>
+                  </Row>
+                  <AlertDialog.Root>
+                    <AlertDialog.Trigger>
+                      <Button variant="ghost" color="gray" size="1" style={{ marginTop: 5 }}><Trash size={16} /> Delete number</Button>
+                    </AlertDialog.Trigger>
+                    <AlertDialog.Content>
+                      <AlertDialog.Title>Delete phone number</AlertDialog.Title>
+                      <AlertDialog.Description>
+                        Are you sure you want to delete this phone number? This action cannot be undone.
+                      </AlertDialog.Description>
+                      <Row style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+                        <AlertDialog.Cancel>
+                          <Button variant="soft" color="gray">Cancel</Button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action>
+                          <Button variant="solid" color="red" onClick={() => deleteNumber(phoneNumbers[0])}>Delete</Button>
+                        </AlertDialog.Action>
+                      </Row>
+                    </AlertDialog.Content>
+                  </AlertDialog.Root>
+                </Col>
+              </Row>
+            )}
+          </Col>
+        </Row>
+
+        {/* Billing */}
         <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Billing</Heading>
         <Separator style={{ width: '100%' }} />
+        
 
         {/* Current plan */}
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
@@ -370,7 +520,7 @@ export default function Settings() {
           </Col>
         </Row>
 
-        <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+        <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
 
       </div>
 

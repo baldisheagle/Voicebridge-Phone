@@ -19,6 +19,16 @@ export const REVIEW_PLATFORMS = [
     { value: 'Zocdoc', label: 'Zocdoc' },
 ];
 
+export const CALENDARS = [
+    { value: 'cal.com', label: 'Cal.com' },
+];
+
+export const AMBIENT_SOUNDS = [
+    { value: 'none', label: 'None' },
+    { value: 'coffee-shop', label: 'Coffee Shop' },
+    { value: 'call-center', label: 'Call Center' },
+];
+
 export const CALL_PURPOSES = [
     { value: 'book_appointment', label: 'Book Appointment' },
     { value: 'cancel_appointment', label: 'Cancel Appointment' },

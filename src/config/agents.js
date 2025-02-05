@@ -3,14 +3,16 @@
 // Receptionist template
 export const PHONE_RECEPTIONIST_TEMPLATE = {
     id: "phone-receptionist",
-    title: "Phone Receptionist",
-    description: "A phone receptionist agent that answers caller questions, takes messages, and schedules appointments.",
-    icon: '/assets/agents/phone-receptionist-with-cal-com.svg',
     name: "Sally",
     voiceId: "11labs-Myra",
     language: "en-US",
     model: "gpt-4o",
     includeDisclaimer: true,
+    calendar: "cal.com",
+    ambientSound: "none",
+    boostedKeywords: "",
+    endCallOnSilence: 10,
+    maxDuration: 10,
     calCom: {
         apiKey: "cal_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         eventId: 1234567,

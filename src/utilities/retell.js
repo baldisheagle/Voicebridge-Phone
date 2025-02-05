@@ -124,7 +124,7 @@ export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber
     
 }
 
-// TODO: Create Retell LLM for Receptionist
+// Create Retell LLM for Receptionist
 export const createRetellLlmAndAgentForReceptionist = async (agentId, workspaceId, llm, agent) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellLlmAndAgentForReceptionist';
@@ -297,6 +297,8 @@ export const createRetellAgent = async (agent) => {
             voiceId: agent.voiceId,
             language: agent.language,
             includeDisclaimer: agent.includeDisclaimer,
+            ambientSound: agent.ambientSound,
+            boostedKeywords: agent.boostedKeywords,
             calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
             calApiKey: agent.calCom ? agent.calCom.apiKey : null,
             timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone
@@ -340,6 +342,8 @@ export const updateRetellLlmAndAgent = async (agent) => {
             voiceId: agent.voiceId,
             language: agent.language,
             includeDisclaimer: agent.includeDisclaimer,
+            ambientSound: agent.ambientSound,
+            boostedKeywords: agent.boostedKeywords,
             calEventTypeId: agent.calCom ? agent.calCom.eventId : null,
             calApiKey: agent.calCom ? agent.calCom.apiKey : null,
             timezone: TIMEZONE_OFFSETS.find(offset => offset.value === agent.businessInfo.timezone).timezone

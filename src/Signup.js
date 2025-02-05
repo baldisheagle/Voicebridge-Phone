@@ -112,7 +112,7 @@ export default function Signup(props) {
           <div style={{ height: '100%', background: 'linear-gradient(135deg, #e0f7e0, #e0f0ff, #ffe0e8)' }}></div>
         </Col>
       )}
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </Row>
   );
 }

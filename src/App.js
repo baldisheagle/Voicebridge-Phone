@@ -21,7 +21,7 @@ import Dashboard from "./Dashboard.js";
 import Settings from './Settings.js';
 import Calls from './Calls.js';
 import Receptionist from './Receptionist.js';
-import PhoneNumbers from './PhoneNumbers.js';
+// import PhoneNumbers from './PhoneNumbers.js';
 import Business from './Business.js';
 import Onboarding from './Onboarding.js';
 import UserProfile from './Profile.js';
@@ -51,7 +51,7 @@ export default function App() {
                   {/* <Route path="/agents" element={<Agents />} /> */}
                   {/* <Route path="/agent/:agentId" element={<Agent />} /> */}
                   <Route path="/receptionist" element={<Receptionist />} />
-                  <Route path="/phone-numbers" element={<PhoneNumbers />} />
+                  {/* <Route path="/phone-numbers" element={<PhoneNumbers />} /> */}
                   <Route path="/business" element={<Business />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/profile" element={<UserProfile />} />

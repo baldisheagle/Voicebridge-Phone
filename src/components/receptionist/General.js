@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
-import { Select, Spinner, Text, TextField, Button, Switch } from '@radix-ui/themes';
+import { Select, Spinner, Text, TextField, Button, Switch, Separator, AlertDialog } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { LANGUAGES, VOICES } from '../../config/lists.js';
-
-import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
-import { connectRetellPhoneNumberToAgent } from '../../utilities/retell.js';
+import { LANGUAGES, VOICES, AMBIENT_SOUNDS } from '../../config/lists.js';
+import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents, dbDeleteAgent } from '../../utilities/database.js';
+import { connectRetellPhoneNumberToAgent, deleteRetellAgent } from '../../utilities/retell.js';
 import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
+import { Trash } from '@phosphor-icons/react';
 
-export default function General({ agent }) {
+export default function General({ agent, onDeleteReceptionist }) {
 
   const auth = useRequireAuth();
 
@@ -18,6 +18,8 @@ export default function General({ agent }) {
   const [agentName, setAgentName] = useState(agent.agentName);
   const [voiceId, setVoiceId] = useState(agent.voiceId);
   const [includeDisclaimer, setIncludeDisclaimer] = useState(agent.includeDisclaimer);
+  const [ambientSound, setAmbientSound] = useState(agent.ambientSound);
+  const [boostedKeywords, setBoostedKeywords] = useState(agent.boostedKeywords);
   const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
@@ -62,6 +64,8 @@ export default function General({ agent }) {
       voiceId: voiceId,
       phoneNumber: agentPhoneNumber,
       includeDisclaimer: includeDisclaimer,
+      ambientSound: ambientSound,
+      boostedKeywords: boostedKeywords,
     }
 
     try {
@@ -97,6 +101,28 @@ export default function General({ agent }) {
       }
     } catch (error) {
       toast.error('Error updating settings');
+      setLoading(false);
+    }
+  }
+
+  const deleteReceptionist = async () => {
+    // Delete agent from database
+    setLoading(true);
+    let res = await dbDeleteAgent(auth.workspace.id, agent.id);
+    if (res) {
+      // Delete agent from Retell
+      let retellRes = await deleteRetellAgent(agent.retellLlmId, agent.retellAgentId);
+      if (retellRes) {
+        // Call onDeleteReceptionist callback
+        onDeleteReceptionist();
+        toast.success('Receptionist deleted');
+        setLoading(false);
+      } else {
+        toast.error('Error deleting receptionist');
+        setLoading(false);
+      }
+    } else {
+      toast.error('Error deleting receptionist');
       setLoading(false);
     }
   }
@@ -138,7 +164,7 @@ export default function General({ agent }) {
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Name</Text>
-          <Text size="1" as='div' color='gray'>The name of your agent.</Text>
+          <Text size="1" as='div' color='gray'>The name of your receptionist.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <TextField.Root variant="surface" placeholder="John Doe" value={agentName} onChange={(e) => setAgentName(e.target.value)} />
@@ -149,7 +175,7 @@ export default function General({ agent }) {
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Voice</Text>
-          <Text size="1" as='div' color='gray'>The voice of your agent.</Text>
+          <Text size="1" as='div' color='gray'>The voice of your receptionist.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Select.Root value={voiceId} onValueChange={(value) => setVoiceId(value)}>
@@ -167,7 +193,7 @@ export default function General({ agent }) {
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Language</Text>
-          <Text size="1" as='div' color='gray'>The language of your agent.</Text>
+          <Text size="1" as='div' color='gray'>The language of your receptionist.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Select.Root value={language} onValueChange={(value) => setLanguage(value)}>
@@ -192,8 +218,35 @@ export default function General({ agent }) {
         </Col>
       </Row> */}
 
-      {/* TODO: Background sound */}
-      {/* TODO: Boosted keywords */}
+      {/* Ambient sound */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Ambient sound</Text>
+          <Text size="1" as='div' color='gray'>Play a background sound during calls.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <Select.Root value={ambientSound} onValueChange={(value) => setAmbientSound(value)}>
+            <Select.Trigger variant="surface" color="gray" placeholder="Select an ambient sound" />
+            <Select.Content>
+              {AMBIENT_SOUNDS.map((option, index) => (
+                <Select.Item key={index} value={option.value}>{option.label}</Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>  
+        </Col>
+      </Row>
+      
+      {/* Boosted keywords */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Boosted keywords</Text>
+          <Text size="1" as='div' color='gray'>Enter a comma-separated list of words and terms specific to your business that the receptionist will use in their vocabulary.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <TextField.Root variant="surface" placeholder="e.g. subluxation, spondylolisthesis, sciatica" value={boostedKeywords} onChange={(e) => setBoostedKeywords(e.target.value)} />
+        </Col>
+      </Row>
+
       {/* TODO: End call on silence timeout */}
       {/* TODO: Max duration of call */}
 
@@ -204,7 +257,41 @@ export default function General({ agent }) {
         </Col>
       </Row>
 
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Separator style={{ marginTop: 40, width: '100%' }} />
+
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Delete receptionist</Text>
+          <Text size="1" as='div' color='gray'>Permanently delete your receptionist.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button variant="surface" color='red'><Trash size={16} /> Delete</Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content>
+              <AlertDialog.Title>Delete Receptionist</AlertDialog.Title>
+              <AlertDialog.Description>
+                Are you sure you want to delete this receptionist? This action cannot be undone.
+              </AlertDialog.Description>
+              <Row className="mt-4" style={{ justifyContent: 'flex-end', marginLeft: 0, marginRight: 0 }}>
+                <Col xs="auto" style={{ paddingRight: 10 }}>
+                  <AlertDialog.Cancel>
+                    <Button variant="soft" color="gray">Cancel</Button>
+                  </AlertDialog.Cancel>
+                </Col>
+                <Col xs="auto">
+                  <AlertDialog.Action>
+                    <Button variant="solid" color="red" onClick={deleteReceptionist}>Delete</Button>
+                  </AlertDialog.Action>
+                </Col>
+              </Row>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+        </Col>
+      </Row>
+
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 

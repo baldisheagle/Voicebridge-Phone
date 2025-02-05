@@ -52,6 +52,8 @@ export const createReceptionist = async (_agent) => {
     agent.voice_id = _agent.voiceId;
     agent.language = _agent.language;
     agent.response_engine.llm_id = llm.llm_id;
+    agent.ambient_sound = _agent.ambientSound;
+    agent.boosted_keywords = _agent.boostedKeywords.split(',').map(keyword => keyword.trim());
 
     // Call createRetellLlmForReceptionist function
     let res = await createRetellLlmAndAgentForReceptionist(_agent.id, _agent.workspaceId, llm, agent);
@@ -118,6 +120,8 @@ export const updateReceptionistAgent = async (agent) => {
     _agent.voice_id = agent.voiceId;
     _agent.language = agent.language;
     _agent.response_engine.llm_id = agent.retellLlmId;
+    _agent.ambient_sound = agent.ambientSound;
+    _agent.boosted_keywords = agent.boostedKeywords.split(',').map(keyword => keyword.trim());
     
     // console.log('Retell Agent', _agent);
     

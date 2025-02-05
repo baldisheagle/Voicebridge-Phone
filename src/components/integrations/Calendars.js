@@ -163,7 +163,7 @@ export default function Calendars() {
         </Row>
       )}
 
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 

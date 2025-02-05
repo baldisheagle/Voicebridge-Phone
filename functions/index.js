@@ -151,8 +151,10 @@ async function saveCallToDatabase(call) {
     console.error('No agent found for call', call.agent_id);
     return;
   }
-  
-  const workspaceId = agents.docs[0].data().workspaceId;
+
+  const agent = agents.docs[0].data();
+  const workspaceId = agent.workspaceId;
+  const notifyEmail = agent.notifyEmail ? agent.notifyEmail : null;
 
   // Save call to database
   const callId = uuidv4();
@@ -179,6 +181,11 @@ async function saveCallToDatabase(call) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+
+  // TODO: Send email notification with call summary to notifyEmail if it exists
+  // if (notifyEmail) {
+  //   sendEmailNotification(notifyEmail, call);
+  // }
 
   return;
 

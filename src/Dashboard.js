@@ -4,7 +4,7 @@ import { useRequireAuth } from './use-require-auth.js';
 import { numberWithCommas, useMediaQuery } from './shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "./Theme.js";
-import { Heading, Spinner, Text, Card, Table, IconButton, Badge, ScrollArea, AlertDialog, Button, Link } from '@radix-ui/themes';
+import { Heading, Spinner, Text, Card, Table, IconButton, Badge, ScrollArea, AlertDialog, Button, Link, Callout } from '@radix-ui/themes';
 import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight, Check, Checks, Phone, UserCircleGear } from '@phosphor-icons/react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dbCreateAgent, dbDeleteCall, dbGetAgents, dbGetCalls, dbGetPhoneNumbers } from './utilities/database.js';
@@ -36,7 +36,9 @@ export default function Dashboard() {
 
   // Initialize
   const initialize = async () => {
+    
     setLoading(true);
+    
     const calls = await dbGetCalls(auth.workspace.id);
     if (calls) {
       setCalls(calls.sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
@@ -47,15 +49,22 @@ export default function Dashboard() {
       });
       setTotalTime(numberWithCommas(Math.floor(_totalTime / 60000)));
     }
+    
     // Get phone numbers
     dbGetPhoneNumbers(auth.workspace.id).then((phoneNumbers) => {
       setNumPhoneNumbers(phoneNumbers.length);
     });
+    
     // Get agents
     dbGetAgents(auth.workspace.id).then((agents) => {
       setNumAgents(agents.length);
     });
-    setLoading(false);
+
+    // Wait for 1 second before setting loading to false
+    setTimeout(() => {
+      setLoading(false);
+    }, 300);
+
   }
 
   const toggleRow = (index) => {
@@ -99,18 +108,27 @@ export default function Dashboard() {
         {(numPhoneNumbers === 0 || numAgents === 0) && (
           <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: -10 }}>
             <Col xs={12} sm={12} md={12} lg={12} style={{ padding: 10 }}>
-              <Card>
                 <Heading size='3' style={{ color: 'var(--gray-11)' }}>Get started</Heading>
                 {/* Check if the workspace has at least one agent */}
-                {numAgents === 0 && (
-                  <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><UserCircleGear weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/receptionist')}>Create your receptionist <ArrowRight weight="bold" size={12} /></Link></Text>
-                )}
+                <Callout.Root>
+                    <Callout.Icon>
+                      <UserCircleGear weight="bold" size={16} />
+                    </Callout.Icon>
+                    <Callout.Text style={{ marginBottom: 0 }}>
+                      <Link onClick={() => navigate('/receptionist')} style={{ textDecoration: numAgents > 0 ? 'line-through' : 'none', cursor: 'pointer' }}>Build your receptionist <ArrowRight weight="bold" size={12} /></Link>
+                    </Callout.Text>
+                </Callout.Root>
 
                 {/* Check if the workspace has at least one phone number */}
-                {numPhoneNumbers === 0 && (
-                  <Text size="2" as='div' style={{ marginTop: 5, cursor: 'pointer' }}><Phone weight="bold" size={12} style={{ marginRight: 5 }} /> <Link onClick={() => navigate('/phone-numbers')}>Buy a phone number <ArrowRight weight="bold" size={12} /></Link></Text>
-                )}
-              </Card>
+                <Callout.Root style={{ marginTop: 10 }}>
+                    <Callout.Icon>
+                      <Phone weight="bold" size={16} />
+                    </Callout.Icon>
+                    <Callout.Text style={{ marginBottom: 0 }}>
+                      <Link onClick={() => navigate('/settings')} style={{ textDecoration: numPhoneNumbers > 0 ? 'line-through' : 'none', cursor: 'pointer' }}>Set up your business <ArrowRight weight="bold" size={12} /></Link>
+                    </Callout.Text>
+                </Callout.Root>
+
             </Col>
           </Row>
         )}
@@ -266,7 +284,7 @@ export default function Dashboard() {
 
       </div>
 
-      <Toaster position='top-center' toastOptions={{ className: 'toast', style: { background: 'var(--gray-3)', color: 'var(--gray-11)' } }} />
+      <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
     </div>
   )
 
