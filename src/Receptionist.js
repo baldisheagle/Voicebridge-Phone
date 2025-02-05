@@ -4,19 +4,19 @@ import { Row } from 'react-bootstrap';
 import { Heading, Spinner, TabNav, Button } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/receptionist/BusinessInfo.js';
-import Settings from './components/receptionist/Settings.js';
+import General from './components/receptionist/General.js';
 import Calendar from './components/receptionist/Calendar.js';
 import FAQ from './components/receptionist/FAQ.js';
 import { dbCreateAgent, dbGetAgents } from './utilities/database.js';
 import { v4 as uuidv4 } from 'uuid';
-import { PHONE_RECEPTIONIST_TEMPLATE } from './config/agenttemplates.js';
+import { PHONE_RECEPTIONIST_TEMPLATE } from './config/agents.js';
 import { createReceptionist } from './utilities/receptionist.js';
 
 export default function Receptionist() {
 
   const auth = useRequireAuth();
 
-  const [activeTab, setActiveTab] = useState('settings');
+  const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(true);
   const [receptionist, setReceptionist] = useState(null);
 
@@ -102,8 +102,8 @@ export default function Receptionist() {
       {receptionist && (
         <div style={{ width: '100%', marginTop: 10 }}>
           <TabNav.Root>
-            <TabNav.Link href="#" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
-              Settings
+            <TabNav.Link href="#" active={activeTab === 'general'} onClick={() => setActiveTab('general')}>
+              General
             </TabNav.Link>
 
             <TabNav.Link href="#" active={activeTab === 'businessInfo'} onClick={() => setActiveTab('businessInfo')}>
@@ -137,8 +137,8 @@ export default function Receptionist() {
       {receptionist && (  
         <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
-        {activeTab === 'settings' && (    
-          <Settings agent={receptionist} />
+        {activeTab === 'general' && (    
+          <General agent={receptionist} />
         )}
 
         {activeTab === 'businessInfo' && (

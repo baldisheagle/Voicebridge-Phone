@@ -1,12 +1,10 @@
 // Sendgrid function APIs
 
-import { APP_MODE } from '../config/app.js';
-
 // Send verification email
 export const sendVerificationEmail = async (email, code) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/sendVerificationEmail';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/sendVerificationEmail';
     }
     

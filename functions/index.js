@@ -1196,78 +1196,78 @@ exports.connectRetellPhoneNumberToAgent = onRequest((req, res) => {
     appointments
 */
 
-async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef) {
+// async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef) {
   
-  const calendarId = 'primary';
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`;
+//   const calendarId = 'primary';
+//   const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`;
   
-  const params = new URLSearchParams({
-    timeMin: new Date().toISOString(),
-    singleEvents: 'true',
-    orderBy: 'startTime',
-    maxResults: '10' // TODO: Remove this
-  });
+//   const params = new URLSearchParams({
+//     timeMin: new Date().toISOString(),
+//     singleEvents: 'true',
+//     orderBy: 'startTime',
+//     maxResults: '10' // TODO: Remove this
+//   });
 
-  async function fetchWithToken(token) {
-    return fetch(`${url}?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    });
-  }
+//   async function fetchWithToken(token) {
+//     return fetch(`${url}?${params}`, {
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//         'Accept': 'application/json'
+//       }
+//     });
+//   }
 
-  try {
-    let response = await fetchWithToken(accessToken);
+//   try {
+//     let response = await fetchWithToken(accessToken);
 
-    // If token expired, refresh it
-    if (response.status === 401 && refreshToken) {
+//     // If token expired, refresh it
+//     if (response.status === 401 && refreshToken) {
 
-      console.log("Access token expired, refreshing...");
+//       console.log("Access token expired, refreshing...");
       
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-          client_secret: process.env.REACT_APP_GOOGLE_CLIENT_SECRET,
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token',
-        }),
-      });
+//       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/x-www-form-urlencoded',
+//         },
+//         body: new URLSearchParams({
+//           client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+//           client_secret: process.env.REACT_APP_GOOGLE_CLIENT_SECRET,
+//           refresh_token: refreshToken,
+//           grant_type: 'refresh_token',
+//         }),
+//       });
 
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to refresh token');
-      }
+//       if (!tokenResponse.ok) {
+//         throw new Error('Failed to refresh token');
+//       }
 
-      const newTokens = await tokenResponse.json();
+//       const newTokens = await tokenResponse.json();
       
-      // Update the calendar document with new access token
-      await calendarDocRef.update({
-        accessToken: newTokens.access_token,
-        refreshToken: newTokens.refresh_token,
-        updatedAt: new Date().toISOString(),
-      });
+//       // Update the calendar document with new access token
+//       await calendarDocRef.update({
+//         accessToken: newTokens.access_token,
+//         refreshToken: newTokens.refresh_token,
+//         updatedAt: new Date().toISOString(),
+//       });
 
-      console.log('Updated calendar with new tokens:', newTokens);
+//       console.log('Updated calendar with new tokens:', newTokens);
 
-      // Retry the calendar request with new token
-      response = await fetchWithToken(newTokens.access_token);
-    }
+//       // Retry the calendar request with new token
+//       response = await fetchWithToken(newTokens.access_token);
+//     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`HTTP error! status: ${response.status}`);
+//     }
 
-    const data = await response.json();
-    return data.items;
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return [];
-  }
-}
+//     const data = await response.json();
+//     return data.items;
+//   } catch (error) {
+//     console.error('Error fetching events:', error);
+//     return [];
+//   }
+// }
 
 /*
   Function: Stripe API: Create customer
@@ -1278,37 +1278,35 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     null
 */
 
-// exports.stripeCreateCustomer = onRequest((req, res) => {
-//   corsMiddleware(req, res, async () => {
-//     if (req && req.headers && req.headers.authorization && req.headers.authorization === 'Bearer ' + process.env.REACT_APP_API_AUTHORIZATION_CODE) {
-//       if (req.body && req.body.customer_email) {
+exports.stripeCreateCustomer = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
 
-//         let customerEmail = req.body.customer_email;
-//         let userId = req.body.user_id;
+    if (req.body && req.body.customer_email) {
 
-//         stripe.customers.create({
-//           email: customerEmail,
-//           metadata: {
-//             user_id: userId
-//           }
-//         }).then((customer) => {
-//           if (customer) {
-//             res.status(200).send(customer);
-//           } else {
-//             res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-//           }
-//         }).catch((error) => {
-//           res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-//         })
+      let customerEmail = req.body.customer_email;
+      let userId = req.body.user_id;
 
-//       } else {
-//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-//       }
-//     } else {
-//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-//     }
-//   })
-// });
+      stripe.customers.create({
+        email: customerEmail,
+        metadata: {
+          user_id: userId
+        }
+      }).then((customer) => {
+        if (customer) {
+          res.status(200).send(customer);
+        } else {
+          res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+        }
+      }).catch((error) => {
+        res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+
+  })
+});
 
 /*
   Function: Stripe API: Create checkout session
@@ -1320,38 +1318,34 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     null
 */
 
-// exports.stripeCreateCheckoutSession = onRequest((req, res) => {
-//   corsMiddleware(req, res, async () => {
-//     if (req && req.headers && req.headers.authorization && req.headers.authorization === 'Bearer ' + process.env.REACT_APP_API_AUTHORIZATION_CODE) {
-//       if (req.body && req.body.price_id && req.body.stripe_customer_id) {
-//         let priceId = req.body.price_id;
-//         let customerId = req.body.stripe_customer_id;
+exports.stripeCreateCheckoutSession = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.price_id && req.body.stripe_customer_id) {
+      let priceId = req.body.price_id;
+      let customerId = req.body.stripe_customer_id;
 
-//         stripe.checkout.sessions.create({
-//           mode: "subscription",
-//           line_items: [
-//             {
-//               price: priceId,
-//               quantity: 1,
-//             },
-//           ],
-//           success_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-//           cancel_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/canceled`,
-//           customer: customerId,
-//         }).then((session) => {
-//           res.status(200).send({ url: session.url });
-//         }).catch((error) => {
-//           return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-//         })
+      stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/canceled`,
+        customer: customerId,
+      }).then((session) => {
+        res.status(200).send({ url: session.url });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
 
-//       } else {
-//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-//       }
-//     } else {
-//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-//     }
-//   })
-// });
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
 
 
 /*
@@ -1364,27 +1358,23 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     null
 */
 
-// exports.stripeCreateCustomerPortalSession = onRequest((req, res) => {
-//   corsMiddleware(req, res, async () => {
-//     if (req && req.headers && req.headers.authorization && req.headers.authorization === 'Bearer ' + process.env.REACT_APP_API_AUTHORIZATION_CODE) {
-//       if (req.body && req.body.stripe_customer_id) {
-//         let customerId = req.body.stripe_customer_id;
-//         stripe.billingPortal.sessions.create({
-//           customer: customerId,
-//           return_url: `${process.env.REACT_APP_STRIPE_PORTAL_URL}`,
-//         }).then((session) => {
-//           res.status(200).send({ url: session.url });
-//         }).catch((error) => {
-//           return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-//         })
-//       } else {
-//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-//       }
-//     } else {
-//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-//     }
-//   })
-// });
+exports.stripeCreateCustomerPortalSession = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.stripe_customer_id) {
+      let customerId = req.body.stripe_customer_id;
+      stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${process.env.REACT_APP_STRIPE_PORTAL_URL}`,
+      }).then((session) => {
+        res.status(200).send({ url: session.url });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
 
 /*
   Function: Stripe API: Get subscription status
@@ -1394,26 +1384,22 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     subscription object
 */
 
-// exports.stripeGetSubscription = onRequest((req, res) => {
-//   corsMiddleware(req, res, async () => {
-//     if (req && req.headers && req.headers.authorization && req.headers.authorization === 'Bearer ' + process.env.REACT_APP_API_AUTHORIZATION_CODE) {
-//       if (req.body && req.body.subscription_id) {
-//         let subscriptionId = req.body.subscription_id;
-//         stripe.subscriptions.retrieve(
-//           subscriptionId
-//         ).then((subscription) => {
-//           res.status(200).send({ subscription: subscription });
-//         }).catch((error) => {
-//           return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-//         })
-//       } else {
-//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-//       }
-//     } else {
-//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-//     }
-//   })
-// });
+exports.stripeGetSubscription = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.subscription_id) {
+      let subscriptionId = req.body.subscription_id;
+      stripe.subscriptions.retrieve(
+        subscriptionId
+      ).then((subscription) => {
+        res.status(200).send({ subscription: subscription });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
 
 
 /*
@@ -1422,86 +1408,87 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
   Return:
 */
 
-// exports.stripeWebhooks = onRequest(
-//   { cors: true },
-//   (req, res) => {
-//     let event = req.body;
+exports.stripeWebhooks = onRequest(
+  { cors: true },
+  (req, res) => {
+    let event = req.body;
 
-//     const endpointSecret = process.env.REACT_APP_STRIPE_ENDPOINT_SECRET;
-//     if (endpointSecret) {
-//       // Get the signature sent by Stripe
-//       const signature = req.headers['stripe-signature'];
-//       try {
-//         event = stripe.webhooks.constructEvent(
-//           req.rawBody,
-//           signature,
-//           endpointSecret
-//         );
-//       } catch (err) {
-//         console.log(`⚠️  Webhook signature verification failed.`, err.message);
-//         return res.sendStatus(400);
-//       }
-//     }
-//     let subscription;
-//     // Handle the event
-//     switch (event.type) {
-//       case 'customer.subscription.trial_will_end':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.trial_will_end', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'customer.subscription.deleted':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.deleted', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'customer.subscription.created':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.created', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'customer.subscription.updated':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.updated', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'customer.subscription.paused':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.paused', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'customer.subscription.resumed':
-//         subscription = event.data.object;
-//         console.log('customer.subscription.resumed', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       case 'entitlements.active_entitlement_summary.updated':
-//         subscription = event.data.object;
-//         console.log('entitlements.active_entitlement_summary.updated', subscription.status);
-//         if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-//           stripeUpdateUser(subscription);
-//         }
-//         break;
-//       default:
-//         // Unexpected event type
-//         console.log(`Unhandled event type ${event.type}.`);
-//     }
-//     // Return a 200 response to acknowledge receipt of the event
-//     res.send();
-//   }
-// );
+    const endpointSecret = process.env.REACT_APP_STRIPE_ENDPOINT_SECRET;
+    if (endpointSecret) {
+      // Get the signature sent by Stripe
+      const signature = req.headers['stripe-signature'];
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.rawBody,
+          signature,
+          endpointSecret
+        );
+      } catch (err) {
+        console.log(`⚠️  Webhook signature verification failed.`, err.message);
+        return res.sendStatus(400);
+      }
+    }
+
+    let subscription;
+    // Handle the event
+    switch (event.type) {
+      case 'customer.subscription.trial_will_end':
+        subscription = event.data.object;
+        console.log('customer.subscription.trial_will_end', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.deleted':
+        subscription = event.data.object;
+        console.log('customer.subscription.deleted', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.created':
+        subscription = event.data.object;
+        console.log('customer.subscription.created', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.updated':
+        subscription = event.data.object;
+        console.log('customer.subscription.updated', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.paused':
+        subscription = event.data.object;
+        console.log('customer.subscription.paused', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.resumed':
+        subscription = event.data.object;
+        console.log('customer.subscription.resumed', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'entitlements.active_entitlement_summary.updated':
+        subscription = event.data.object;
+        console.log('entitlements.active_entitlement_summary.updated', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      default:
+        // Unexpected event type
+        console.log(`Unhandled event type ${event.type}.`);
+    }
+    // Return a 200 response to acknowledge receipt of the event
+    res.send();
+  }
+);
 
 
 /*
@@ -1514,65 +1501,40 @@ async function getGoogleCalendarEvents(accessToken, refreshToken, calendarDocRef
     null
 */
 
-// async function stripeUpdateUser(subscription) {
+async function stripeUpdateWorkspace(subscription) {
 
-//   const { data, error } = await supabaseClient
-//     .from('users')
-//     .update({
-//       stripe_subscription_id: subscription.id,
-//       stripe_plan_id: subscription.plan.id,
-//       stripe_status: subscription.status,
-//       stripe_current_period_start: subscription.current_period_start ? new Date(subscription.current_period_start*1000) : null,
-//       stripe_current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end*1000) : null,
-//     })
-//     .eq('stripe_customer_id', subscription.customer)
+  console.log('stripeUpdateWorkspace', subscription);
 
-//   // console.log('user stripe update error', data, error);
+  try {
 
-//   if (error) {
-//     return false;
-//   } else {
-//     return true
-//   }
+    let workspace = await db.collection('workspaces').where('stripe_customer_id', '==', subscription.customer).limit(1).get();
 
-// }
+    if (workspace.docs.length > 0) {
 
-/*
-  Function: Sendgrid API: Send welcome email
-  Parameters:
-    email
-    to_name
-  Return:
-    null
-*/
+      let workspaceData = workspace.docs[0].data();
+      let workspaceId = workspace.docs[0].id;
 
-// exports.sendgridWelcomeEmail = onRequest((req, res) => {
-//   corsMiddleware(req, res, async () => {
-//     if (req && req.headers && req.headers.authorization && req.headers.authorization === 'Bearer ' + process.env.REACT_APP_API_AUTHORIZATION_CODE) {
-//       if (req.body && req.body.email && req.body.to_name) {
+      workspaceData.stripe_subscription_id = subscription.id;
+      workspaceData.stripe_plan_id = subscription.plan.id;
+      workspaceData.stripe_status = subscription.status;
+      workspaceData.stripe_current_period_start = subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null;
+      workspaceData.stripe_current_period_end = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
 
-//         let email = req.body.email;
-//         let to_name = req.body.to_name;
+      await db.collection('workspaces').doc(workspaceId).update(workspaceData);
 
-//         sgMail.setApiKey(process.env.REACT_APP_SENDGRID_API_KEY);
-//         sgMail.send({
-//           to: email,
-//           replyTo: "hello@terastack.ai",
-//           from: "Terastack <hello@terastack.ai>",
-//           templateId: emailTemplates["WelcomeEmail"],
-//           dynamic_template_data: {
-//             to_name: to_name,
-//           }
-//         })
+      console.log('workspace updated', workspaceData);
 
-//       } else {
-//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-//       }
-//     } else {
-//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-//     }
-//   })
-// });
+    }
+
+    return true;
+
+  } catch (error) {
+    console.log('stripeUpdateWorkspace error', error);
+    return false;
+  }
+
+}
+
 
 /*
   Function: MixPanel Track Event

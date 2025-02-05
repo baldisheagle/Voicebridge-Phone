@@ -1,7 +1,7 @@
 // Utilities for Receptionist
 
 import { TIMEZONE_OFFSETS } from "../config/lists";
-import { RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT, RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM } from "../config/retelltemplates.js";
+import { RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT, RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM } from "../config/retell.js";
 import { createRetellLlmAndAgentForReceptionist, updateRetellAgentForReceptionist, updateRetellLlmForReceptionist } from "./retell.js";
 
 // Create Retell LLM and Agent for Receptionist

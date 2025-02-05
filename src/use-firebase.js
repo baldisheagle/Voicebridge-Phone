@@ -4,7 +4,7 @@ import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth, signInWithPopup, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { sendVerificationEmail } from "./utilities/sendgrid";
-import { PHONE_RECEPTIONIST_TEMPLATE } from "./config/agenttemplates";
+import { PHONE_RECEPTIONIST_TEMPLATE } from "./config/agents.js";
 import { dbCreateAgent } from "./utilities/database.js";
 import { v4 as uuidv4 } from 'uuid';
 import { createReceptionist } from "./utilities/receptionist";

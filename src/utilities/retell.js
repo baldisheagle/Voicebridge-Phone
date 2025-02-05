@@ -1,14 +1,13 @@
 // Retell API
 
 import { TIMEZONE_OFFSETS } from "../config/lists.js";
-import { APP_MODE } from "../config/app.js";
 
 // Import phone number using Retell's Import Phone Number API
 export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickname) => {
 
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/importRetellPhoneNumber';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/importRetellPhoneNumber';
     }
     
@@ -38,7 +37,7 @@ export const importRetellPhoneNumber = async (phoneNumber, terminationUri, nickn
 export const deleteRetellPhoneNumber = async (number) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellPhoneNumber';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/deleteRetellPhoneNumber';
     }
     try {
@@ -69,7 +68,7 @@ export const deleteRetellPhoneNumber = async (number) => {
 export const buyRetellPhoneNumber = async (areaCode, nickname) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/buyRetellPhoneNumber';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/buyRetellPhoneNumber';
     }
     let res = await fetch(url, {
@@ -100,7 +99,7 @@ export const buyRetellPhoneNumber = async (areaCode, nickname) => {
 export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/connectRetellPhoneNumberToAgent';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/connectRetellPhoneNumberToAgent';
     }
     let res = await fetch(url, {
@@ -129,7 +128,7 @@ export const connectRetellPhoneNumberToAgent = async (retellAgentId, phoneNumber
 export const createRetellLlmAndAgentForReceptionist = async (agentId, workspaceId, llm, agent) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellLlmAndAgentForReceptionist';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/createRetellLlmAndAgentForReceptionist';
     }
 
@@ -160,7 +159,7 @@ export const createRetellLlmAndAgentForReceptionist = async (agentId, workspaceI
 export const updateRetellLlmForReceptionist = async (llm_id, llm) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellLlmForReceptionist';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/updateRetellLlmForReceptionist';
     }
     
@@ -189,7 +188,7 @@ export const updateRetellLlmForReceptionist = async (llm_id, llm) => {
 export const createRetellAgentForReceptionist = async (agent) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgentForReceptionist';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/createRetellAgentForReceptionist';
     }
     
@@ -217,7 +216,7 @@ export const createRetellAgentForReceptionist = async (agent) => {
 export const updateRetellAgentForReceptionist = async (agent_id, agent) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellAgentForReceptionist';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/updateRetellAgentForReceptionist';
     }
     
@@ -247,7 +246,7 @@ export const deleteRetellAgent = async (retellLlmId, retellAgentId) => {
 
     // Call function to delete agent on Retell
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/deleteRetellAgent';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/deleteRetellAgent';
     }
     let res = await fetch(url, {
@@ -277,7 +276,7 @@ export const deleteRetellAgent = async (retellLlmId, retellAgentId) => {
 export const createRetellAgent = async (agent) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/createRetellAgent';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/createRetellAgent';
     }
     
@@ -318,7 +317,7 @@ export const createRetellAgent = async (agent) => {
 export const updateRetellLlmAndAgent = async (agent) => {
     
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/updateRetellLlmAndAgent';
-    if (APP_MODE === 'production') {
+    if (process.env.REACT_APP_APP_MODE === 'production') {
         url = 'https://us-central1-voicebridge-app.cloudfunctions.net/updateRetellLlmAndAgent';
     }
 

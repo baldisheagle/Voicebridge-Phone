@@ -4,12 +4,13 @@ import { Col, Row } from 'react-bootstrap';
 import { Select, Spinner, Text, TextField, Button, Switch } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { LANGUAGES, VOICES } from '../../config/lists.js';
-import { formatPhoneNumber } from '../../helpers/string.js';
+
 import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
 import { connectRetellPhoneNumberToAgent } from '../../utilities/retell.js';
 import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
+import { formatPhoneNumber } from '../../helpers/string.js';
 
-export default function CallSettings({ agent }) {
+export default function General({ agent }) {
 
   const auth = useRequireAuth();
 
@@ -181,7 +182,7 @@ export default function CallSettings({ agent }) {
       </Row>
 
       {/* Include emergency disclaimer */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      {/* <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
         <Text size="2" weight="bold">Emergency disclaimer</Text>
         <Text size="1" as='div' color='gray'>At the start of every call, the receptionist announces an emergency disclaimer to hangup and call 911 if the caller is in an emergency.</Text>
@@ -189,7 +190,12 @@ export default function CallSettings({ agent }) {
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Switch variant="outline" size="2" checked={includeDisclaimer} onCheckedChange={(checked) => setIncludeDisclaimer(checked)} />
         </Col>
-      </Row>
+      </Row> */}
+
+      {/* TODO: Background sound */}
+      {/* TODO: Boosted keywords */}
+      {/* TODO: End call on silence timeout */}
+      {/* TODO: Max duration of call */}
 
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>

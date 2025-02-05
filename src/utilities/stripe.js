@@ -123,6 +123,10 @@ export const stripeGetCustomerPortalSession = async (stripe_customer_id) => {
 
 export const stripeGetSubscription = async (stripe_subscription_id) => {
 
+  if (!stripe_subscription_id) {
+    return null;
+  }
+
   let responseStripe = await fetch('https://stripegetsubscription-zdw5tjm7ca-uc.a.run.app', {
     method: 'POST',
     headers: {
