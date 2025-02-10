@@ -39,8 +39,6 @@ export default function Signup(props) {
       const result = await auth.googleLogin();
       if (result) {
         navigate('/dashboard');
-      } else {
-        toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
       console.error("Google login error:", error);

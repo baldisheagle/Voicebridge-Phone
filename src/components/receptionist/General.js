@@ -5,10 +5,11 @@ import { Select, Spinner, Text, TextField, Button, Switch, Separator, AlertDialo
 import toast, { Toaster } from 'react-hot-toast';
 import { LANGUAGES, VOICES, AMBIENT_SOUNDS } from '../../config/lists.js';
 import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents, dbDeleteAgent } from '../../utilities/database.js';
-import { connectRetellPhoneNumberToAgent, deleteRetellAgent } from '../../utilities/retell.js';
-import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
+// import { connectRetellPhoneNumberToAgent, deleteRetellAgent } from '../../archived/retell_apis.js';
+// import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
 import { Trash } from '@phosphor-icons/react';
+import { deleteVapiAssistant, linkPhoneNumberToAssistant, updateVapiAssistant } from '../../utilities/vapi.js';
 
 export default function General({ agent, onDeleteReceptionist }) {
 
@@ -42,7 +43,7 @@ export default function General({ agent, onDeleteReceptionist }) {
     setLoading(false);
   }
 
-  const saveCallSettings = async () => {
+  const updateReceptionist = async () => {
 
     setLoading(true);
 
@@ -66,53 +67,52 @@ export default function General({ agent, onDeleteReceptionist }) {
       includeDisclaimer: includeDisclaimer,
       ambientSound: ambientSound,
       boostedKeywords: boostedKeywords,
+      updatedAt: new Date().toISOString(),
     }
+
+    // console.log('Agent', _agent);
 
     try {
 
-      // Update agent in database
-      let res = await dbUpdateAgent(_agent);
+      // Update Vapi assistant
+      let res = await updateVapiAssistant(_agent);
+
+      // If the phone number is not null, link the phone number to the assistant
+      if (agentPhoneNumber) {
+        let vapiPhoneNumberId = phoneNumbers.find(p => p.id === agentPhoneNumber).vapiId;
+        // console.log("Link phone number to agent in Vapi", agent.vapiAssistantId, vapiPhoneNumberId);
+        let res = await linkPhoneNumberToAssistant(agent.vapiAssistantId, vapiPhoneNumberId);
+      }
 
       if (res) {
-        // Link phone number to agent, if not null
-        if (agentPhoneNumber) {
-          let phoneNumber = phoneNumbers.find(p => p.id === agentPhoneNumber);
-          if (phoneNumber) {
-            // Connect phone number to agent
-            await connectRetellPhoneNumberToAgent(agent.retellAgentId, phoneNumber.number);
-          }
-        }
-
-        // Update Retell LLM
-        let retellLlm = await updateReceptionistLlm(_agent);
-
-        // Update Retell Agent
-        let retellAgent = await updateReceptionistAgent(_agent);
-
-        if (retellLlm && retellAgent) {
-          toast.success('Settings updated');
+        // Update agent in database
+        let dbRes = await dbUpdateAgent(_agent);
+        if (dbRes) {
+          setLoading(false);
+          toast.success('Receptionist updated');
         } else {
-          toast.error('Error updating settings');
+          toast.error('Error updating receptionist');
+          setLoading(false);
         }
-        setLoading(false);
       } else {
-        toast.error('Error updating settings');
+        toast.error('Error updating receptionist');
         setLoading(false);
       }
+
     } catch (error) {
-      toast.error('Error updating settings');
+      toast.error('Error updating receptionist');
       setLoading(false);
     }
+
   }
 
   const deleteReceptionist = async () => {
-    // Delete agent from database
     setLoading(true);
-    let res = await dbDeleteAgent(auth.workspace.id, agent.id);
+    let res = await deleteVapiAssistant(agent.vapiAssistantId);
     if (res) {
-      // Delete agent from Retell
-      let retellRes = await deleteRetellAgent(agent.retellLlmId, agent.retellAgentId);
-      if (retellRes) {
+      // Delete agent from database
+      let dbRes = await dbDeleteAgent(auth.workspace.id, agent.id);
+      if (dbRes) {
         // Call onDeleteReceptionist callback
         onDeleteReceptionist();
         toast.success('Receptionist deleted');
@@ -237,7 +237,7 @@ export default function General({ agent, onDeleteReceptionist }) {
       </Row>
       
       {/* Boosted keywords */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      {/* <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Boosted keywords</Text>
           <Text size="1" as='div' color='gray'>Enter a comma-separated list of words and terms specific to your business that the receptionist will use in their vocabulary.</Text>
@@ -245,15 +245,16 @@ export default function General({ agent, onDeleteReceptionist }) {
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <TextField.Root variant="surface" placeholder="e.g. subluxation, spondylolisthesis, sciatica" value={boostedKeywords} onChange={(e) => setBoostedKeywords(e.target.value)} />
         </Col>
-      </Row>
+      </Row> */}
 
       {/* TODO: End call on silence timeout */}
+      
       {/* TODO: Max duration of call */}
 
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Button variant="solid" onClick={saveCallSettings}>Save changes</Button>
+          <Button variant="solid" onClick={updateReceptionist}>Save changes</Button>
         </Col>
       </Row>
 
@@ -292,6 +293,7 @@ export default function General({ agent, onDeleteReceptionist }) {
       </Row>
 
       <Toaster position='top-center' toastOptions={{ className: 'toast' }} />
+      
     </div>
   )
 

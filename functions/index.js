@@ -20,6 +20,9 @@ const sgMail = require('@sendgrid/mail');
 // Mendable
 const { default: FirecrawlApp } = require('@mendable/firecrawl-js');
 
+// Vapi
+const { VapiClient } = require("@vapi-ai/server-sdk");
+
 // Dotenv
 require('dotenv').config();
 
@@ -50,6 +53,70 @@ const corsOptions = {
 // Cors middleware
 const corsMiddleware = cors(corsOptions);
 
+/*
+  Function: Verify authorization header
+  Parameters:
+    req
+  Return:
+    null
+*/
+
+async function verifyAuthorizationHeader(req) {
+
+  // Verify authorization header exists and starts with 'Bearer '
+  if (req && req.headers && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+
+    // Get token from authorization header
+    const token = req.headers.authorization.split('Bearer ')[1]; 
+    
+    // Verify token exists
+    if (!token) { 
+      console.error('No token provided');
+      return false;
+    }
+
+    // Verify token with Firebase Admin
+    try {
+      await admin.auth().verifyIdToken(token);
+    } catch (error) {
+      console.error('Error verifying token:', error);
+      return false;
+    }
+
+  } else {
+    console.error('No authorization header');
+    return false;
+  }
+
+  return true;
+
+}
+
+/* 
+  Function: Test valid authorization header
+  Parameters:
+    req
+  Return:
+    null
+*/
+
+exports.isAuthorized = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    let authorized = await verifyAuthorizationHeader(req);
+    if (!authorized) {
+      res.status(401).send(JSON.stringify({ error: "Unauthorized" }));
+      return;
+    }
+
+    // console.log('Authorization successful');
+    res.status(200).send(JSON.stringify({ message: "Authorization successful" }));
+
+  });
+
+});
+
 
 /*
   On new user creation: Send verification email
@@ -60,7 +127,15 @@ const corsMiddleware = cors(corsOptions);
 */
 
 exports.sendVerificationEmail = onRequest((req, res) => {
+  
   corsMiddleware(req, res, async () => {
+
+    // Verify authorization header
+    // if (!verifyAuthorizationHeader(req)) {
+    //   console.error('Authorization failed');
+    //   res.status(401).send(JSON.stringify({ error: "Unauthorized" }));
+    //   return;
+    // }
 
     if (req.body && req.body.email && req.body.code) {
 
@@ -88,71 +163,181 @@ exports.sendVerificationEmail = onRequest((req, res) => {
   })
 });
 
-
 /*
-  Webhook: Calls from Retell
-*/
-
-exports.retellCallWebhook = onRequest((req, res) => {
-  console.log('Retell call webhook');
-  
-  // TODO: Add signature verification
-  // if (
-  //   !Retell.verify(
-  //     req.rawBody,
-  //     process.env.REACT_APP_RETELL_API_KEY,
-  //     req.headers["x-retell-signature"],
-  //   )
-  // ) {
-  //   console.error("Invalid signature");
-  //   res.status(401).send('Invalid signature');
-  //   return;
-  // }
-
-  const {event, call} = req.body;
-  switch (event) {
-    case "call_started":
-      break;
-    case "call_ended":
-      break;
-    case "call_analyzed":
-      console.log("Call analyzed event received", call.call_id);
-      saveCallToDatabase(call).then(() => {
-        console.log('Call saved to database', call.call_id);
-      }).catch((error) => {
-        console.error('Error saving call to database', error);
-      });
-      break;
-    default:
-      console.log("Received an unknown event:", event);
-  }
-  
-  // Send response only once at the end
-  res.status(204).send();
-});
-
-/*
-  Function: Save call to database
+  Function: Vapi - Check Cal.com availability
   Parameters:
-    call
+    null
   Return:
     null
 */
 
-async function saveCallToDatabase(call) {
+exports.vapiCheckCalendarAvailabilityCalCom = onRequest({
+  enforceAppCheck: false,
+  cors: true,
+  invoker: 'public'
+}, async (req, res) => {
 
-  console.log('Saving call to database', call);
+  console.log('Vapi - Check Cal.com availability', req.headers, req.body);
 
-  // Get workspaceId from based on call.agent_id
-  if (!call.agent_id) {
-    console.error('No agent_id found for call', call.call_id);
+  // Verify Vapi secret
+  const secret = req.headers['x-vapi-secret'];
+  
+  if (!secret || secret !== process.env.REACT_APP_VAPI_SECRET) {
+    console.error('Invalid or missing Vapi secret header');
+    res.status(401).send(JSON.stringify({ error: 'Unauthorized' }));
     return;
   }
 
-  const agents = await db.collection('agents').where('retellAgentId', '==', call.agent_id).limit(1).get();
-  
+  const toolCallId = req.body.message.toolCalls[0].id;
+  const arguments = req.body.message?.toolCalls[0]?.function?.arguments;
+  const assistantId = req.body.message.assistant && req.body.message.assistant.id ? req.body.message.assistant.id : null;
+
+  console.log('Assistant ID', assistantId);
+  console.log('Arguments', arguments);
+
+  // Get assistant
+  const assistants = await db.collection('assistants').where('vapiAssistantId', '==', assistantId).limit(1).get();
+
+  if (assistants.docs.length === 0) {
+    console.error('Assistant not found');
+    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
+    return;
+  }
+
+  // If assistant is found, extract cal.com api key and event ID
+  const assistant = assistants.docs[0].data();
+
+  console.log('Assistant', assistant);
+
+  if (assistant.calCom?.apiKey && assistant.calCom?.eventId) {
+
+    // Check availability
+    const dateTime = arguments.date_time;
+    if (dateTime) {
+
+    }
+
+
+    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "That time is available." }] }));
+    return;
+
+  } else {
+    console.error('Cal.com API key or event ID not found');
+    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
+    return;
+  }
+
+});
+
+
+/*
+  Function: Vapi - Book event on Cal.com
+  Parameters:
+    null
+  Return:
+    null
+*/
+
+exports.vapiBookEventOnCalCom = onRequest({
+  enforceAppCheck: false,
+  cors: true,
+  invoker: 'public'
+}, (req, res) => {
+
+  // console.log('Vapi - Book event on Cal.com', req.headers, req.body);
+
+  // Verify Vapi secret
+  const secret = req.headers['x-vapi-secret'];
+
+  if (!secret || secret !== process.env.REACT_APP_VAPI_SECRET) {
+    console.error('Invalid or missing Vapi secret header');
+    res.status(401).send(JSON.stringify({ error: 'Unauthorized' }));
+    return;
+  }
+
+  const toolCallId = req.body.message.toolCalls[0].id;
+  const assistantId = req.body.message?.assistant?.id ? req.body.message.assistant.id : null;
+  const arguments = req.body.message?.toolCalls[0]?.function?.arguments;
+
+  console.log('Assistant ID', assistantId);
+  console.log('Arguments', arguments);
+
+  res.status(200).send(JSON.stringify({
+    "results": [
+      {
+        "toolCallId": toolCallId,
+        "result": "Event booked successfully."
+      }
+    ]
+  }));
+
+});
+
+/*
+  Function: Vapi Webhook
+  Parameters:
+    null
+  Return:
+    null
+*/
+
+exports.vapiWebhook = onRequest({
+  enforceAppCheck: false,
+  cors: true,
+  invoker: 'public'
+}, (req, res) => {
+
+  console.log('Vapi Webhook', req.headers, req.body);
+
+  // TODO: Verify Vapi secret
+  // Verify Vapi secret
+  // const secret = req.headers['x-vapi-secret'];
+
+  // if (!secret) { // || secret !== process.env.REACT_APP_VAPI_SECRET
+  //   console.error('Invalid or missing Vapi secret header');
+  //   res.status(401).send(JSON.stringify({ error: 'Unauthorized' }));
+  //   return;
+  // }
+
+  let message = req.body.message;
+  let assistant = req.body.assistant;
+
+  switch (message.type) {
+    case 'end-of-call-report':
+      saveVapiCallToDatabase(message);
+      break;
+    default:
+      console.log('Received an unknown message type:', message.type);
+      break;
+  }
+
+  res.status(200).send(JSON.stringify({ message: "Vapi Webhook received" }));
+
+});
+
+/*
+  Function: Save Vapi call to database
+  Parameters:
+    message
+  Return:
+    null
+*/
+
+  async function saveVapiCallToDatabase(message) {
+
+  console.log('Saving Vapi call to database', message);
+
+  const assistantId = message.call?.assistantId ? message.call.assistantId : null;
+
+  if (!assistantId) {
+    console.error('No assistant ID found for call', message);
+    return;
+  }
+
+  const agents = await db.collection('agents').where('vapiAssistantId', '==', assistantId).limit(1).get();
+
   if (agents.docs.length === 0) {
-    console.error('No agent found for call', call.agent_id);
+    console.error('No agent found for call', assistantId);
     return;
   }
 
@@ -165,26 +350,28 @@ async function saveCallToDatabase(call) {
   await db.collection('calls').doc(callId).set({
     id: callId,
     workspaceId: workspaceId,
-    agentId: call.agent_id,
-    callId: call.call_id,
-    cost: call.call_cost || null,
-    callSummary: call.call_analysis && call.call_analysis.call_summary ? call.call_analysis.call_summary : null,
-    userSentiment: call.call_analysis && call.call_analysis.user_sentiment ? call.call_analysis.user_sentiment : null,
-    callerName: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.caller_name ? call.call_analysis.custom_analysis_data.caller_name : 'Anonymous',
-    callPurpose: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.purpose_of_call ? call.call_analysis.custom_analysis_data.purpose_of_call : 'Unknown',
-    fromNumber: call.from_number ? call.from_number : null,
-    toNumber: call.to_number ? call.to_number : null,
-    direction: call.direction || null,
-    callStatus: call.call_status || null,
-    startTimestamp: call.start_timestamp || null,
-    endTimestamp: call.end_timestamp || null,
-    durationMs: call.duration_ms || null,
-    transcript: call.transcript || null,
-    recordingUrl: call.recording_url || null,
-    disconnectReason: call.disconnect_reason || null,
+    agentId: assistantId,
+    callId: message.call?.id ? message.call.id : null,
+    cost: message.cost ? message.cost : null,
+    callSummary: message.analysis?.summary ? message.analysis.summary : null,
+    userSentiment: message.analysis?.structuredData?.sentiment ? message.analysis.structuredData.sentiment : null,
+    callerName: message.analysis?.structuredData?.name_of_caller ? message.analysis.structuredData.name_of_caller : null,
+    callPurpose: message.analysis?.structuredData?.call_purpose ? message.analysis.structuredData.call_purpose : null,
+    fromNumber: message.customer?.number ? message.customer.number : null,
+    toNumber: message.phoneNumber?.number ? message.phoneNumber.number : null,
+    direction: null,
+    callStatus: null,
+    startTimestamp: message.startedAt ? message.startedAt : null,
+    endTimestamp: message.endedAt ? message.endedAt : null,
+    durationMs: message.durationMs ? message.durationMs : null,
+    transcript: message.transcript ? message.transcript : null,
+    recordingUrl: message.recordingUrl ? message.recordingUrl : null,
+    disconnectReason: message.endedReason ? message.endedReason : null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+
+  console.log('Call saved to database', callId);
 
   // TODO: Send email notification with call summary to notifyEmail if it exists
   // if (notifyEmail) {
@@ -196,223 +383,144 @@ async function saveCallToDatabase(call) {
 }
 
 /*
-  Function: Create Retell LLM and Agent for Receptionist
+  Function: Vapi - Create Assistant
   Parameters:
-    agent
+    assistant
   Return:
     null
 */
 
-exports.createRetellLlmAndAgentForReceptionist = onRequest((req, res) => {
+exports.vapiCreateAssistant = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    if (req && req.headers) {
+    console.log('Vapi - Create Assistant', req.headers, req.body);
 
-      console.log('Creating Retell LLM and Agent for Receptionist');
+    if (req.body && req.body.assistant) {
+      
+      console.log('Assistant', req.body.assistant);
 
-      if (req.body && req.body.workspaceId && req.body.agentId && req.body.llm && req.body.agent) {
+      try {
 
-        const workspaceId = req.body.workspaceId;
-        const agentId = req.body.agentId;
-        const llm = req.body.llm;
-        const agent = req.body.agent;
-
-        // Create client  
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        // Create client
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
         });
 
-        // Create LLM
-        const retellLlm = await client.llm.create(llm);
+        // Create assistant
+        const assistant = await client.assistants.create(req.body.assistant);
 
-        if (!retellLlm) {
-          console.error('Error creating Retell LLM', retellLlm);
-          res.status(500).send(JSON.stringify({ error: "Error creating Retell LLM" }));
-          return;
-        }
-        
-        // Create Agent
-        agent.response_engine.llm_id = retellLlm.llm_id;
-        const retellAgent = await client.agent.create(agent);
-
-        if (!retellAgent) {
-          console.error('Error creating Retell Agent', retellAgent);
-          res.status(500).send(JSON.stringify({ error: "Error creating Retell Agent" }));
-          return;
-        }
-
-        // Save agent to database
-        const dbAgents = await db.collection('agents').where('id', '==', agentId).where('workspaceId', '==', workspaceId).limit(1).get();
-
-        if (dbAgents.docs.length > 0) {
-          await dbAgents.docs[0].ref.update({
-            retellLlmId: retellLlm.llm_id,
-            retellAgentId: retellAgent.agent_id,
-            updatedAt: new Date().toISOString(),
-          });
-          res.status(200).send(JSON.stringify({ retell_llm_id: retellLlm.llm_id, retell_agent_id: retellAgent.agent_id }));
-          return;
-
+        if (assistant) {
+          console.log('Assistant created', assistant);
+          res.status(200).send(JSON.stringify({ id: assistant.id }));
         } else {
-          console.error('No agent found in database', req.body.agentId);
-          res.status(400).send(JSON.stringify({ error: "No agent found in database" }));
+          console.error('Error creating assistant', assistant);
+          res.status(500).send(JSON.stringify({ error: "Error creating assistant" }));
           return;
         }
+
+      } catch (error) {
+        console.error('Error creating assistant', error);
+        res.status(500).send(JSON.stringify({ error: "Error creating assistant" }));
+        return;
+      }
+
+    } else {
+      console.error('Missing assistant');
+      res.status(400).send(JSON.stringify({ error: "Missing assistant" }));
+      return;
+    }
+
+  });
+
+});
+
+/*
+  Function: Vapi - Update Assistant
+  Parameters:
+    assistant
+  Return:
+    null
+*/
+
+exports.vapiUpdateAssistant = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    console.log('Vapi - Update Assistant', req.headers, req.body);
+
+    if (req.body && req.body.assistant_id && req.body.assistant) {
+      console.log('Assistant ID', req.body.assistant_id);
+      console.log('Assistant', req.body.assistant);
+
+      try {
+        // Create client
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
+        });
+
+        // Update assistant
+        const updatedAssistant = await client.assistants.update(req.body.assistant_id, req.body.assistant);
+
+        if (updatedAssistant) {
+          res.status(200).send(JSON.stringify({ message: "Assistant updated" }));
+        } else {
+          console.error('Error updating assistant', updatedAssistant);
+          res.status(500).send(JSON.stringify({ error: "Error updating assistant" }));
+          return;
+        }
+
+      } catch (error) {
+        console.error('Error updating assistant', error);
+        res.status(500).send(JSON.stringify({ error: "Error updating assistant" }));
+        return;
+      }
+
+    } else {
+      console.error('Missing assistant_id or assistant');
+    }
+
+  }); 
+
+});
+
+/*
+  Function: Vapi - Delete Assistant
+  Parameters:
+    assistantId
+  Return:
+    null
+*/
+
+exports.vapiDeleteAssistant = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    console.log('Vapi - Delete Assistant', req.headers, req.body);
+
+    if (req.body && req.body.assistant_id) {
+      console.log('Assistant ID', req.body.assistant_id);
+
+      try {
+        // Create client
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
+        });
+
+        // Delete assistant
+        await client.assistants.delete(req.body.assistant_id);
+
+        res.status(200).send(JSON.stringify({ message: "Assistant deleted" }));
+
+      } catch (error) {
+        console.error('Error deleting assistant', error);
+        res.status(500).send(JSON.stringify({ error: "Error deleting assistant" }));
+        return;
         
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
-      }
 
-    } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
-    }
-
-  });
-  
-});
-
-
-/*
-  Function: Update Retell LLM for Receptionist
-  Parameters:
-    llm
-  Return:
-    null
-*/
-
-exports.updateRetellLlmForReceptionist = onRequest((req, res) => {
-
-  corsMiddleware(req, res, async () => {
-
-    if (req && req.headers) {
-
-      console.log('Updating Retell LLM for Receptionist');
-
-      if (req.body && req.body.llm_id && req.body.llm) {
-
-        const llm_id = req.body.llm_id;
-        const llm = req.body.llm;
-
-        // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
-        });
-
-        // Update LLM
-        const retellLlm = await client.llm.update(llm_id, llm);
-
-        console.log('Retell LLM updated', llm_id);
-
-        res.status(200).send(JSON.stringify({ message: "Retell LLM updated" }));
-        return;
-
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
-      }
-
-    } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
-    }
-  });
-
-});
-
-/*
-  Function: Update Retell Agent for Receptionist
-  Parameters:
-    agent_id
-    agent
-  Return:
-    null
-*/
-
-exports.updateRetellAgentForReceptionist = onRequest((req, res) => {
-
-  corsMiddleware(req, res, async () => {
-
-    if (req && req.headers) {
-
-      console.log('Updating Retell Agent for Receptionist');
-
-      if (req.body && req.body.agent_id && req.body.agent) {
-
-        const agent_id = req.body.agent_id;
-        const agent = req.body.agent;
-
-        // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
-        });
-
-        // Update Agent
-        const retellAgent = await client.agent.update(agent_id, agent);
-
-        res.status(200).send(JSON.stringify({ message: "Retell Agent updated" }));
-        return;
-
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
-      }
-
-    } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
-    }
-  });
-
-});
-
-/*
-  Function: Create Retell Agent
-  Parameters:
-    agentName
-  Return:
-    null
-*/
-
-exports.deleteRetellAgent = onRequest((req, res) => {
-
-  corsMiddleware(req, res, async () => {
-
-    if (req && req.headers) {
-      if (req.body && req.body.retellLlmId && req.body.retellAgentId) {
-        console.log('Deleting Retell Agent');
-
-        // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
-        });
-
-        // Delete LLM
-        await client.llm.delete(req.body.retellLlmId);
-
-        // Delete Agent
-        await client.agent.delete(req.body.retellAgentId);
-
-        res.status(200).send(JSON.stringify({ message: "Retell Agent deleted" }));
-        return;
-
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
       }
     } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
+      console.error('Missing assistant_id');
     }
 
   });
@@ -420,159 +528,50 @@ exports.deleteRetellAgent = onRequest((req, res) => {
 });
 
 /*
-  Function: Import Retell Phone Number
-  Parameters:
-    phonenumber
-    terminationuri
-    nickname
-  Return:
-    null
-*/
-
-exports.importRetellPhoneNumber = onRequest((req, res) => {
-
-  console.log('Importing Retell Phone Number', req.body);
-  
-  corsMiddleware(req, res, async () => {
-
-    if (req && req.headers) {
-      if (req.body && req.body.phoneNumber && req.body.terminationUri && req.body.nickname) {
-        console.log('Importing Retell Phone Number');
-
-        // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
-        });
-
-        // Import Phone Number
-        let phoneNumber = await client.phoneNumber.import({
-          phone_number: req.body.phoneNumber,
-          termination_uri: req.body.terminationUri,
-          nickname: req.body.nickname,
-        });
-
-        console.log('Retell Phone Number imported', phoneNumber);
-        res.status(200).send(JSON.stringify({ message: "Retell Phone Number imported" }));
-        return;
-
-      } else {
-        console.error('Missing parameters');
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
-      }
-    } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
-    }
-
-  });
-
-});
-
-/*
-  Function: Buy Retell Phone Number
+  Function: Vapi - Buy Number
   Parameters:
     areaCode
-    nickname
   Return:
     null
 */
 
-exports.buyRetellPhoneNumber = onRequest((req, res) => {
-
-  console.log('Buying Retell Phone Number', req.body);
-  
-  corsMiddleware(req, res, async () => {
-
-    if (req && req.headers) {
-      if (req.body && req.body.areaCode && req.body.nickname) {
-        
-        console.log('Buying Retell Phone Number');
-
-        // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
-        });
-
-        // Buy Phone Number
-        try {
-          let phoneNumber = await client.phoneNumber.create({
-            area_code: parseInt(req.body.areaCode),
-            nickname: req.body.nickname,
-          });
-
-          console.log('Retell Phone Number bought', phoneNumber);
-          res.status(200).send(JSON.stringify(phoneNumber));
-          return;
-
-        } catch (error) {
-          console.error('Error buying phone number', error);
-          res.status(500).send(JSON.stringify({ error: "Error buying phone number" }));
-          return;
-        }
-
-        // res.status(200).send(JSON.stringify({ phone_number: '1234567890', last_modification_timestamp: '2021-01-01T00:00:00.000Z' }));
-        // return;
-
-      } else {
-        console.error('Missing parameters');
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-        return;
-      }
-    } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
-      return;
-    }
-
-  });
-  
-});
-
-/*
-  Function: Delete Retell Phone Number
-  Parameters:
-    phoneNumber
-  Return:
-    null
-*/
-
-exports.deleteRetellPhoneNumber = onRequest((req, res) => {
-
-  console.log('Deleting Retell Phone Number', req.body);
+exports.vapiBuyNumber = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    if (req && req.headers) {
-      if (req.body && req.body.phoneNumber) {
+    if (req.body && req.body.nickname) {
+
+      try {
 
         // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
         });
 
-        // Delete Phone Number
-        try {
-          await client.phoneNumber.delete(req.body.phoneNumber);
-        } catch (error) {
-          console.error('Error deleting phone number', error);
-          res.status(500).send(JSON.stringify({ error: "Error deleting phone number" }));
+        // Buy number
+        const number = await client.phoneNumbers.create({
+          provider: 'vapi',
+          name: req.body.nickname,
+        });
+
+        if (number) {
+          console.log('Number bought', number);
+          res.status(200).send(JSON.stringify({ number: number }));
+        } else {
+          console.error('Error buying number', number);
+          res.status(500).send(JSON.stringify({ error: "Error buying number" }));
           return;
         }
-
-        console.log('Retell Phone Number deleted', req.body.phoneNumber);
-        res.status(200).send(JSON.stringify({ message: "Retell Phone Number deleted" }));
-        return;
         
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+      } catch (error) {
+        console.error('Error buying number', error);
+        res.status(500).send(JSON.stringify({ error: "Error buying number" }));
         return;
       }
+
     } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      console.error('Missing parameters');
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
       return;
     }
 
@@ -581,49 +580,94 @@ exports.deleteRetellPhoneNumber = onRequest((req, res) => {
 });
 
 /*
-  Function: Connect Retell Phone Number to Agent
+  Function: Vapi - Delete Number
   Parameters:
-    retellAgentId
+    numberId
+  Return:
+    null
+*/
+
+exports.vapiDeleteNumber = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    if (req.body && req.body.numberId) {
+
+      console.log('Deleting number', req.body.numberId);
+
+      try {
+
+        // Create client
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
+        });
+
+        // Delete number
+        await client.phoneNumbers.delete(req.body.numberId);
+
+        res.status(200).send(JSON.stringify({ message: "Number deleted" }));
+        return;
+        
+
+      } catch (error) {
+        console.error('Error deleting number', error);
+        res.status(500).send(JSON.stringify({ error: "Error deleting number" }));
+        return;
+      }
+
+    } else {
+      console.error('Missing parameters');
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+      return;
+    }
+
+  });
+
+});
+
+/*
+  Function: Vapi - Link Phone Number to Assistant
+  Parameters:
+    assistantId
     phoneNumber
   Return:
     null
 */
 
-exports.connectRetellPhoneNumberToAgent = onRequest((req, res) => {
+exports.vapiLinkPhoneNumberToAssistant = onRequest((req, res) => {
 
-  console.log('Connecting Retell Phone Number to Agent');
-
+  
   corsMiddleware(req, res, async () => {
 
-    if (req && req.headers) {
-      if (req.body && req.body.retellAgentId && req.body.phoneNumber) {
-        console.log('Connecting Retell Phone Number to Agent', req.body);
+    if (req.body && req.body.assistantId && req.body.phoneNumberId) {
 
+      const assistantId = req.body.assistantId;
+      const phoneNumberId = req.body.phoneNumberId;
+
+      try {
         // Create client
-        const client = new Retell({
-          apiKey: process.env.REACT_APP_RETELL_API_KEY,
+        const client = new VapiClient({
+          token: process.env.REACT_APP_VAPI_API_KEY,
+        });
+      
+        // Link phone number to assistant
+        await client.phoneNumbers.update(phoneNumberId.toString(), {
+          assistantId: assistantId.toString()
         });
 
-        // Connect Phone Number to Agent
-        await client.phoneNumber.update( req.body.phoneNumber, {
-          inbound_agent_id: req.body.retellAgentId,
-        });
+        res.status(200).send(JSON.stringify({ message: "Phone number linked to assistant" }));
 
-        console.log('Retell Phone Number connected to Agent', req.body.retellAgentId, req.body.phoneNumber);
-        res.status(200).send(JSON.stringify({ message: "Retell Phone Number connected to Agent" }));
-        return;
-        
-      } else {
-        console.error('Missing parameters', req.body);
-        res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+      } catch (error) {
+        console.error('Error linking phone number to assistant', error);
+        res.status(500).send(JSON.stringify({ error: "Error linking phone number to assistant" }));
         return;
       }
+
     } else {
-      console.error('Authorization failed', req.headers);
-      res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+      console.error('Missing parameters');
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
       return;
     }
-
   });
 
 });
@@ -642,15 +686,17 @@ exports.firecrawlExtract = onRequest((req, res) => {
 
     if (req.body && req.body.url) {
 
-      console.log('Firecrawl Extract', req.body);
+      // console.log('Firecrawl Extract', req.body);
 
       const url = req.body.url;
 
-      // if (!validateUrl(url)) {
-      //   console.error('Invalid URL', url);
-      //   res.status(400).send(JSON.stringify({ error: "Invalid URL" }));
-      //   return;
-      // }
+      // Validate URL format
+      const urlRegex = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
+      if (!url.match(urlRegex)) {
+        console.error('Invalid URL format', url);
+        res.status(400).send(JSON.stringify({ error: "Invalid URL format" }));
+        return;
+      }
 
       try {
 
@@ -692,6 +738,820 @@ exports.firecrawlExtract = onRequest((req, res) => {
   });
 
 });
+
+
+/*
+  Function: Stripe API: Create customer
+  Parameters:
+    customer_email
+    user_id
+  Return:
+    null
+*/
+
+exports.stripeCreateCustomer = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+
+    if (req.body && req.body.customer_email) {
+
+      let customerEmail = req.body.customer_email;
+      let userId = req.body.user_id;
+
+      stripe.customers.create({
+        email: customerEmail,
+        metadata: {
+          user_id: userId
+        }
+      }).then((customer) => {
+        if (customer) {
+          res.status(200).send(customer);
+        } else {
+          res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+        }
+      }).catch((error) => {
+        res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+
+  })
+});
+
+/*
+  Function: Stripe API: Create checkout session
+  Parameters:
+    price_id: Stripe product price id
+    stripe_customer_id: Stripe customer id
+    customer_email: Customer email for billing
+  Return:
+    null
+*/
+
+exports.stripeCreateCheckoutSession = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.price_id && req.body.stripe_customer_id) {
+      let priceId = req.body.price_id;
+      let customerId = req.body.stripe_customer_id;
+
+      stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/canceled`,
+        customer: customerId,
+      }).then((session) => {
+        res.status(200).send({ url: session.url });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
+
+
+/*
+  Function: Stripe API: Create customer billing portal
+  Parameters:
+    price_id: Stripe product price id
+    stripe_customer_id: Stripe customer id
+    customer_email: Customer email for billing
+  Return:
+    null
+*/
+
+exports.stripeCreateCustomerPortalSession = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.stripe_customer_id) {
+      let customerId = req.body.stripe_customer_id;
+      stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${process.env.REACT_APP_STRIPE_PORTAL_URL}`,
+      }).then((session) => {
+        res.status(200).send({ url: session.url });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
+
+/*
+  Function: Stripe API: Get subscription status
+  Parameters:
+    subscription_id: Stripe subscription id
+  Return:
+    subscription object
+*/
+
+exports.stripeGetSubscription = onRequest((req, res) => {
+  corsMiddleware(req, res, async () => {
+    if (req.body && req.body.subscription_id) {
+      let subscriptionId = req.body.subscription_id;
+      stripe.subscriptions.retrieve(
+        subscriptionId
+      ).then((subscription) => {
+        res.status(200).send({ subscription: subscription });
+      }).catch((error) => {
+        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
+      })
+    } else {
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+    }
+  })
+});
+
+
+/*
+  Function: Stripe Webhooks
+  Parameters:
+  Return:
+*/
+
+exports.stripeWebhooks = onRequest(
+  { cors: true },
+  (req, res) => {
+    let event = req.body;
+
+    const endpointSecret = process.env.REACT_APP_STRIPE_ENDPOINT_SECRET;
+    if (endpointSecret) {
+      // Get the signature sent by Stripe
+      const signature = req.headers['stripe-signature'];
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.rawBody,
+          signature,
+          endpointSecret
+        );
+      } catch (err) {
+        console.log(`⚠️  Webhook signature verification failed.`, err.message);
+        return res.sendStatus(400);
+      }
+    }
+
+    let subscription;
+    // Handle the event
+    switch (event.type) {
+      case 'customer.subscription.trial_will_end':
+        subscription = event.data.object;
+        console.log('customer.subscription.trial_will_end', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.deleted':
+        subscription = event.data.object;
+        console.log('customer.subscription.deleted', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.created':
+        subscription = event.data.object;
+        console.log('customer.subscription.created', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.updated':
+        subscription = event.data.object;
+        console.log('customer.subscription.updated', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.paused':
+        subscription = event.data.object;
+        console.log('customer.subscription.paused', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'customer.subscription.resumed':
+        subscription = event.data.object;
+        console.log('customer.subscription.resumed', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      case 'entitlements.active_entitlement_summary.updated':
+        subscription = event.data.object;
+        console.log('entitlements.active_entitlement_summary.updated', subscription.status);
+        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
+          stripeUpdateWorkspace(subscription);
+        }
+        break;
+      default:
+        // Unexpected event type
+        console.log(`Unhandled event type ${event.type}.`);
+    }
+    // Return a 200 response to acknowledge receipt of the event
+    res.send();
+  }
+);
+
+
+/*
+  Function: Update user with Stripe details
+  Parameters:
+    customer_id
+    plan_id
+    status
+  Return:
+    null
+*/
+
+async function stripeUpdateWorkspace(subscription) {
+
+  console.log('stripeUpdateWorkspace', subscription);
+
+  try {
+
+    let workspace = await db.collection('workspaces').where('stripe_customer_id', '==', subscription.customer).limit(1).get();
+
+    if (workspace.docs.length > 0) {
+
+      let workspaceData = workspace.docs[0].data();
+      let workspaceId = workspace.docs[0].id;
+
+      workspaceData.stripe_subscription_id = subscription.id;
+      workspaceData.stripe_plan_id = subscription.plan.id;
+      workspaceData.stripe_status = subscription.status;
+      workspaceData.stripe_current_period_start = subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null;
+      workspaceData.stripe_current_period_end = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+
+      await db.collection('workspaces').doc(workspaceId).update(workspaceData);
+
+      console.log('workspace updated', workspaceData);
+
+    }
+
+    return true;
+
+  } catch (error) {
+    console.log('stripeUpdateWorkspace error', error);
+    return false;
+  }
+
+}
+
+/*
+  Webhook: Calls from Retell
+*/
+
+// exports.retellCallWebhook = onRequest((req, res) => {
+//   console.log('Retell call webhook');
+  
+//   // TODO: Add signature verification
+//   // if (
+//   //   !Retell.verify(
+//   //     req.rawBody,
+//   //     process.env.REACT_APP_RETELL_API_KEY,
+//   //     req.headers["x-retell-signature"],
+//   //   )
+//   // ) {
+//   //   console.error("Invalid signature");
+//   //   res.status(401).send('Invalid signature');
+//   //   return;
+//   // }
+
+//   const {event, call} = req.body;
+//   switch (event) {
+//     case "call_started":
+//       break;
+//     case "call_ended":
+//       break;
+//     case "call_analyzed":
+//       console.log("Call analyzed event received", call.call_id);
+//       saveRetellCallToDatabase(call).then(() => {
+//         console.log('Call saved to database', call.call_id);
+//       }).catch((error) => {
+//         console.error('Error saving call to database', error);
+//       });
+//       break;
+//     default:
+//       console.log("Received an unknown event:", event);
+//   }
+  
+//   // Send response only once at the end
+//   res.status(204).send();
+// });
+
+/*
+  Function: Save Retell call to database
+  Parameters:
+    call
+  Return:
+    null
+*/
+
+// async function saveRetellCallToDatabase(call) {
+
+//   console.log('Saving Retell call to database', call);
+
+//   // Get workspaceId from based on call.agent_id
+//   if (!call.agent_id) {
+//     console.error('No agent_id found for call', call.call_id);
+//     return;
+//   }
+
+//   const agents = await db.collection('agents').where('retellAgentId', '==', call.agent_id).limit(1).get();
+  
+//   if (agents.docs.length === 0) {
+//     console.error('No agent found for call', call.agent_id);
+//     return;
+//   }
+
+//   const agent = agents.docs[0].data();
+//   const workspaceId = agent.workspaceId;
+//   const notifyEmail = agent.notifyEmail ? agent.notifyEmail : null;
+
+//   // Save call to database
+//   const callId = uuidv4();
+//   await db.collection('calls').doc(callId).set({
+//     id: callId,
+//     workspaceId: workspaceId,
+//     agentId: call.agent_id,
+//     callId: call.call_id,
+//     cost: call.call_cost || null,
+//     callSummary: call.call_analysis && call.call_analysis.call_summary ? call.call_analysis.call_summary : null,
+//     userSentiment: call.call_analysis && call.call_analysis.user_sentiment ? call.call_analysis.user_sentiment : null,
+//     callerName: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.caller_name ? call.call_analysis.custom_analysis_data.caller_name : 'Anonymous',
+//     callPurpose: call.call_analysis && call.call_analysis.custom_analysis_data && call.call_analysis.custom_analysis_data.purpose_of_call ? call.call_analysis.custom_analysis_data.purpose_of_call : 'Unknown',
+//     fromNumber: call.from_number ? call.from_number : null,
+//     toNumber: call.to_number ? call.to_number : null,
+//     direction: call.direction || null,
+//     callStatus: call.call_status || null,
+//     startTimestamp: call.start_timestamp || null,
+//     endTimestamp: call.end_timestamp || null,
+//     durationMs: call.duration_ms || null,
+//     transcript: call.transcript || null,
+//     recordingUrl: call.recording_url || null,
+//     disconnectReason: call.disconnect_reason || null,
+//     createdAt: new Date().toISOString(),
+//     updatedAt: new Date().toISOString(),
+//   });
+
+//   // TODO: Send email notification with call summary to notifyEmail if it exists
+//   // if (notifyEmail) {
+//   //   sendEmailNotification(notifyEmail, call);
+//   // }
+
+//   return;
+
+// }
+
+/*
+  Function: Create Retell LLM and Agent for Receptionist
+  Parameters:
+    agent
+  Return:
+    null
+*/
+
+// exports.createRetellLlmAndAgentForReceptionist = onRequest((req, res) => {
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+
+//       console.log('Creating Retell LLM and Agent for Receptionist');
+
+//       if (req.body && req.body.workspaceId && req.body.agentId && req.body.llm && req.body.agent) {
+
+//         const workspaceId = req.body.workspaceId;
+//         const agentId = req.body.agentId;
+//         const llm = req.body.llm;
+//         const agent = req.body.agent;
+
+//         // Create client  
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Create LLM
+//         const retellLlm = await client.llm.create(llm);
+
+//         if (!retellLlm) {
+//           console.error('Error creating Retell LLM', retellLlm);
+//           res.status(500).send(JSON.stringify({ error: "Error creating Retell LLM" }));
+//           return;
+//         }
+        
+//         // Create Agent
+//         agent.response_engine.llm_id = retellLlm.llm_id;
+//         const retellAgent = await client.agent.create(agent);
+
+//         if (!retellAgent) {
+//           console.error('Error creating Retell Agent', retellAgent);
+//           res.status(500).send(JSON.stringify({ error: "Error creating Retell Agent" }));
+//           return;
+//         }
+
+//         // Save agent to database
+//         const dbAgents = await db.collection('agents').where('id', '==', agentId).where('workspaceId', '==', workspaceId).limit(1).get();
+
+//         if (dbAgents.docs.length > 0) {
+//           await dbAgents.docs[0].ref.update({
+//             retellLlmId: retellLlm.llm_id,
+//             retellAgentId: retellAgent.agent_id,
+//             updatedAt: new Date().toISOString(),
+//           });
+//           res.status(200).send(JSON.stringify({ retell_llm_id: retellLlm.llm_id, retell_agent_id: retellAgent.agent_id }));
+//           return;
+
+//         } else {
+//           console.error('No agent found in database', req.body.agentId);
+//           res.status(400).send(JSON.stringify({ error: "No agent found in database" }));
+//           return;
+//         }
+        
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+  
+// });
+
+
+/*
+  Function: Update Retell LLM for Receptionist
+  Parameters:
+    llm
+  Return:
+    null
+*/
+
+// exports.updateRetellLlmForReceptionist = onRequest((req, res) => {
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+
+//       // Verify authorization header
+//       // let authorized = await verifyAuthorizationHeader(req);
+//       // if (!authorized) {
+//       //   res.status(401).send(JSON.stringify({ error: "Unauthorized" }));
+//       //   return;
+//       // }
+
+//       console.log('Updating Retell LLM for Receptionist');
+
+//       if (req.body && req.body.llm_id && req.body.llm) {
+
+//         const llm_id = req.body.llm_id;
+//         const llm = req.body.llm;
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Update LLM
+//         const retellLlm = await client.llm.update(llm_id, llm);
+
+//         console.log('Retell LLM updated', llm_id);
+
+//         res.status(200).send(JSON.stringify({ message: "Retell LLM updated" }));
+//         return;
+
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+
+// });
+
+/*
+  Function: Update Retell Agent for Receptionist
+  Parameters:
+    agent_id
+    agent
+  Return:
+    null
+*/
+
+// exports.updateRetellAgentForReceptionist = onRequest((req, res) => {
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+
+//       console.log('Updating Retell Agent for Receptionist');
+
+//       if (req.body && req.body.agent_id && req.body.agent) {
+
+//         const agent_id = req.body.agent_id;
+//         const agent = req.body.agent;
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Update Agent
+//         const retellAgent = await client.agent.update(agent_id, agent);
+
+//         res.status(200).send(JSON.stringify({ message: "Retell Agent updated" }));
+//         return;
+
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+//   });
+
+// });
+
+/*
+  Function: Create Retell Agent
+  Parameters:
+    agentName
+  Return:
+    null
+*/
+
+// exports.deleteRetellAgent = onRequest((req, res) => {
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+//       if (req.body && req.body.retellLlmId && req.body.retellAgentId) {
+//         console.log('Deleting Retell Agent');
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Delete LLM
+//         await client.llm.delete(req.body.retellLlmId);
+
+//         // Delete Agent
+//         await client.agent.delete(req.body.retellAgentId);
+
+//         res.status(200).send(JSON.stringify({ message: "Retell Agent deleted" }));
+//         return;
+
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+
+// });
+
+/*
+  Function: Import Retell Phone Number
+  Parameters:
+    phonenumber
+    terminationuri
+    nickname
+  Return:
+    null
+*/
+
+// exports.importRetellPhoneNumber = onRequest((req, res) => {
+
+//   console.log('Importing Retell Phone Number', req.body);
+  
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+//       if (req.body && req.body.phoneNumber && req.body.terminationUri && req.body.nickname) {
+//         console.log('Importing Retell Phone Number');
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Import Phone Number
+//         let phoneNumber = await client.phoneNumber.import({
+//           phone_number: req.body.phoneNumber,
+//           termination_uri: req.body.terminationUri,
+//           nickname: req.body.nickname,
+//         });
+
+//         console.log('Retell Phone Number imported', phoneNumber);
+//         res.status(200).send(JSON.stringify({ message: "Retell Phone Number imported" }));
+//         return;
+
+//       } else {
+//         console.error('Missing parameters');
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+
+// });
+
+/*
+  Function: Buy Retell Phone Number
+  Parameters:
+    areaCode
+    nickname
+  Return:
+    null
+*/
+
+// exports.buyRetellPhoneNumber = onRequest((req, res) => {
+
+//   console.log('Buying Retell Phone Number', req.body);
+  
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+//       if (req.body && req.body.areaCode && req.body.nickname) {
+        
+//         console.log('Buying Retell Phone Number');
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Buy Phone Number
+//         try {
+//           let phoneNumber = await client.phoneNumber.create({
+//             area_code: parseInt(req.body.areaCode),
+//             nickname: req.body.nickname,
+//           });
+
+//           console.log('Retell Phone Number bought', phoneNumber);
+//           res.status(200).send(JSON.stringify(phoneNumber));
+//           return;
+
+//         } catch (error) {
+//           console.error('Error buying phone number', error);
+//           res.status(500).send(JSON.stringify({ error: "Error buying phone number" }));
+//           return;
+//         }
+
+//         // res.status(200).send(JSON.stringify({ phone_number: '1234567890', last_modification_timestamp: '2021-01-01T00:00:00.000Z' }));
+//         // return;
+
+//       } else {
+//         console.error('Missing parameters');
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+  
+// });
+
+/*
+  Function: Delete Retell Phone Number
+  Parameters:
+    phoneNumber
+  Return:
+    null
+*/
+
+// exports.deleteRetellPhoneNumber = onRequest((req, res) => {
+
+//   console.log('Deleting Retell Phone Number', req.body);
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+//       if (req.body && req.body.phoneNumber) {
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Delete Phone Number
+//         try {
+//           await client.phoneNumber.delete(req.body.phoneNumber);
+//         } catch (error) {
+//           console.error('Error deleting phone number', error);
+//           res.status(500).send(JSON.stringify({ error: "Error deleting phone number" }));
+//           return;
+//         }
+
+//         console.log('Retell Phone Number deleted', req.body.phoneNumber);
+//         res.status(200).send(JSON.stringify({ message: "Retell Phone Number deleted" }));
+//         return;
+        
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+
+// });
+
+/*
+  Function: Connect Retell Phone Number to Agent
+  Parameters:
+    retellAgentId
+    phoneNumber
+  Return:
+    null
+*/
+
+// exports.connectRetellPhoneNumberToAgent = onRequest((req, res) => {
+
+//   console.log('Connecting Retell Phone Number to Agent');
+
+//   corsMiddleware(req, res, async () => {
+
+//     if (req && req.headers) {
+//       if (req.body && req.body.retellAgentId && req.body.phoneNumber) {
+//         console.log('Connecting Retell Phone Number to Agent', req.body);
+
+//         // Create client
+//         const client = new Retell({
+//           apiKey: process.env.REACT_APP_RETELL_API_KEY,
+//         });
+
+//         // Connect Phone Number to Agent
+//         await client.phoneNumber.update( req.body.phoneNumber, {
+//           inbound_agent_id: req.body.retellAgentId,
+//         });
+
+//         console.log('Retell Phone Number connected to Agent', req.body.retellAgentId, req.body.phoneNumber);
+//         res.status(200).send(JSON.stringify({ message: "Retell Phone Number connected to Agent" }));
+//         return;
+        
+//       } else {
+//         console.error('Missing parameters', req.body);
+//         res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+//         return;
+//       }
+//     } else {
+//       console.error('Authorization failed', req.headers);
+//       res.status(400).send(JSON.stringify({ error: "Authorization failed" }));
+//       return;
+//     }
+
+//   });
+
+// });
 
 
 /*
@@ -1345,272 +2205,6 @@ exports.firecrawlExtract = onRequest((req, res) => {
 //     return [];
 //   }
 // }
-
-/*
-  Function: Stripe API: Create customer
-  Parameters:
-    customer_email
-    user_id
-  Return:
-    null
-*/
-
-exports.stripeCreateCustomer = onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
-
-    if (req.body && req.body.customer_email) {
-
-      let customerEmail = req.body.customer_email;
-      let userId = req.body.user_id;
-
-      stripe.customers.create({
-        email: customerEmail,
-        metadata: {
-          user_id: userId
-        }
-      }).then((customer) => {
-        if (customer) {
-          res.status(200).send(customer);
-        } else {
-          res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-        }
-      }).catch((error) => {
-        res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-      })
-
-    } else {
-      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-    }
-
-  })
-});
-
-/*
-  Function: Stripe API: Create checkout session
-  Parameters:
-    price_id: Stripe product price id
-    stripe_customer_id: Stripe customer id
-    customer_email: Customer email for billing
-  Return:
-    null
-*/
-
-exports.stripeCreateCheckoutSession = onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
-    if (req.body && req.body.price_id && req.body.stripe_customer_id) {
-      let priceId = req.body.price_id;
-      let customerId = req.body.stripe_customer_id;
-
-      stripe.checkout.sessions.create({
-        mode: "subscription",
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        success_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.REACT_APP_STRIPE_REDIRECT_URL}/canceled`,
-        customer: customerId,
-      }).then((session) => {
-        res.status(200).send({ url: session.url });
-      }).catch((error) => {
-        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-      })
-
-    } else {
-      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-    }
-  })
-});
-
-
-/*
-  Function: Stripe API: Create customer billing portal
-  Parameters:
-    price_id: Stripe product price id
-    stripe_customer_id: Stripe customer id
-    customer_email: Customer email for billing
-  Return:
-    null
-*/
-
-exports.stripeCreateCustomerPortalSession = onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
-    if (req.body && req.body.stripe_customer_id) {
-      let customerId = req.body.stripe_customer_id;
-      stripe.billingPortal.sessions.create({
-        customer: customerId,
-        return_url: `${process.env.REACT_APP_STRIPE_PORTAL_URL}`,
-      }).then((session) => {
-        res.status(200).send({ url: session.url });
-      }).catch((error) => {
-        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-      })
-    } else {
-      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-    }
-  })
-});
-
-/*
-  Function: Stripe API: Get subscription status
-  Parameters:
-    subscription_id: Stripe subscription id
-  Return:
-    subscription object
-*/
-
-exports.stripeGetSubscription = onRequest((req, res) => {
-  corsMiddleware(req, res, async () => {
-    if (req.body && req.body.subscription_id) {
-      let subscriptionId = req.body.subscription_id;
-      stripe.subscriptions.retrieve(
-        subscriptionId
-      ).then((subscription) => {
-        res.status(200).send({ subscription: subscription });
-      }).catch((error) => {
-        return res.status(400).send(JSON.stringify({ error: "Stripe error" }));
-      })
-    } else {
-      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
-    }
-  })
-});
-
-
-/*
-  Function: Stripe Webhooks
-  Parameters:
-  Return:
-*/
-
-exports.stripeWebhooks = onRequest(
-  { cors: true },
-  (req, res) => {
-    let event = req.body;
-
-    const endpointSecret = process.env.REACT_APP_STRIPE_ENDPOINT_SECRET;
-    if (endpointSecret) {
-      // Get the signature sent by Stripe
-      const signature = req.headers['stripe-signature'];
-      try {
-        event = stripe.webhooks.constructEvent(
-          req.rawBody,
-          signature,
-          endpointSecret
-        );
-      } catch (err) {
-        console.log(`⚠️  Webhook signature verification failed.`, err.message);
-        return res.sendStatus(400);
-      }
-    }
-
-    let subscription;
-    // Handle the event
-    switch (event.type) {
-      case 'customer.subscription.trial_will_end':
-        subscription = event.data.object;
-        console.log('customer.subscription.trial_will_end', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'customer.subscription.deleted':
-        subscription = event.data.object;
-        console.log('customer.subscription.deleted', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'customer.subscription.created':
-        subscription = event.data.object;
-        console.log('customer.subscription.created', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'customer.subscription.updated':
-        subscription = event.data.object;
-        console.log('customer.subscription.updated', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'customer.subscription.paused':
-        subscription = event.data.object;
-        console.log('customer.subscription.paused', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'customer.subscription.resumed':
-        subscription = event.data.object;
-        console.log('customer.subscription.resumed', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      case 'entitlements.active_entitlement_summary.updated':
-        subscription = event.data.object;
-        console.log('entitlements.active_entitlement_summary.updated', subscription.status);
-        if (subscription.id && subscription.customer && subscription.status && subscription.plan && subscription.plan.id) {
-          stripeUpdateWorkspace(subscription);
-        }
-        break;
-      default:
-        // Unexpected event type
-        console.log(`Unhandled event type ${event.type}.`);
-    }
-    // Return a 200 response to acknowledge receipt of the event
-    res.send();
-  }
-);
-
-
-/*
-  Function: Update user with Stripe details
-  Parameters:
-    customer_id
-    plan_id
-    status
-  Return:
-    null
-*/
-
-async function stripeUpdateWorkspace(subscription) {
-
-  console.log('stripeUpdateWorkspace', subscription);
-
-  try {
-
-    let workspace = await db.collection('workspaces').where('stripe_customer_id', '==', subscription.customer).limit(1).get();
-
-    if (workspace.docs.length > 0) {
-
-      let workspaceData = workspace.docs[0].data();
-      let workspaceId = workspace.docs[0].id;
-
-      workspaceData.stripe_subscription_id = subscription.id;
-      workspaceData.stripe_plan_id = subscription.plan.id;
-      workspaceData.stripe_status = subscription.status;
-      workspaceData.stripe_current_period_start = subscription.current_period_start ? new Date(subscription.current_period_start * 1000) : null;
-      workspaceData.stripe_current_period_end = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
-
-      await db.collection('workspaces').doc(workspaceId).update(workspaceData);
-
-      console.log('workspace updated', workspaceData);
-
-    }
-
-    return true;
-
-  } catch (error) {
-    console.log('stripeUpdateWorkspace error', error);
-    return false;
-  }
-
-}
 
 
 /*

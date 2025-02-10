@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useAuth } from "./use-firebase.js";
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from './shared-functions.js';
+import { ThemeContext } from './Theme.js';
 import Footer from "./components/common/Footer.js";
 import Logo from "./components/common/Logo.js";
 import { Row, Col, Image } from "react-bootstrap";
@@ -15,6 +16,7 @@ export default function Login(props) {
   const navigate = useNavigate();
 
   let isPageWide = useMediaQuery('(min-width: 960px)');
+  const { theme } = useContext(ThemeContext);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,8 +42,6 @@ export default function Login(props) {
       const result = await auth.googleLogin();
       if (result) {
         navigate('/dashboard');
-      } else {
-        toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
       console.error("Google login error:", error);
@@ -117,7 +117,7 @@ export default function Login(props) {
       </Col>
       { isPageWide && (
         <Col xs={12} sm={12} md={12} lg={6} xl={6} style={{ padding: 0, height: '100vh' }}>
-          <div style={{ height: '100%', background: 'linear-gradient(135deg, #e0f7e0, #e0f0ff, #ffe0e8)' }}></div>
+          <div style={{ height: '100%', background: theme === 'light-theme' ? 'linear-gradient(135deg, #e0f7e0, #e0f0ff, #ffe0e8)' : 'linear-gradient(135deg, #001F3F, #4A148C, #004D40)' }}></div>
         </Col>
       )}
       <Toaster position='top-center' toastOptions={{ className: 'toast' }} />

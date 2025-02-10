@@ -87,6 +87,24 @@ export default function Dashboard() {
     });
   }
 
+  const testAPI = () => {
+    fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/isAuthorized', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${auth.user.accessToken}`
+      }
+    }).then((response) => {
+      console.log(response);
+      if (response.status === 200) {
+        toast.success('API call successful');
+      } else {
+        toast.error('API call failed');
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
   if (!auth || !auth.user || !auth.workspace || loading) {
     return (
       <div style={{ width: '100%', minHeight: '100vh' }}>
@@ -101,6 +119,8 @@ export default function Dashboard() {
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
 
       <Heading size='4'>Dashboard</Heading>
+
+      {/* <Button variant="outline" onClick={() => testAPI()}>Test</Button> */}
 
       <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 

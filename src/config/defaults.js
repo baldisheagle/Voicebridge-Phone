@@ -1,15 +1,13 @@
-// Agent Templates
+// VAPI Agent Defaults
 
-// Receptionist template 
-export const PHONE_RECEPTIONIST_TEMPLATE = {
-    id: "phone-receptionist",
+export const VAPI_AGENT_DEFAULTS = {
     name: "Sally",
-    voiceId: "11labs-Myra",
-    language: "en-US",
-    model: "gpt-4o",
+    voiceId: "sarah",
+    language: "en",
+    model: "gpt-4o-mini",
     includeDisclaimer: true,
     calendar: "cal.com",
-    ambientSound: "coffee-shop",
+    ambientSound: "default",
     boostedKeywords: "",
     endCallOnSilence: 10,
     maxDuration: 10,

@@ -7,10 +7,11 @@ import { dbDeletePhoneNumber, dbGetAgents, dbGetPhoneNumbers, dbUpdateWorkspace 
 import { ArrowDown, Trash, Hourglass, ArrowClockwise, Phone, Copy } from '@phosphor-icons/react';
 import { BILLING_PLANS, BILLING_PLAN_STARTER_STRIPE_PRICE_ID, BILLING_PLAN_PRO_STRIPE_PRICE_ID, BILLING_PLAN_GROWTH_STRIPE_PRICE_ID } from './config/billing.js';
 import { stripeCreateCustomer, stripeGetCheckoutSession, stripeGetCustomerPortalSession, stripeGetSubscription } from './utilities/stripe.js';
-import { buyRetellPhoneNumber, deleteRetellPhoneNumber } from './utilities/retell.js';
+// import { buyRetellPhoneNumber, deleteRetellPhoneNumber } from './utilities/retell.js';
 import { dbAddPhoneNumber } from './utilities/database.js';
-import { v4 as uuidv4 } from 'uuid';  
+import { v4 as uuidv4 } from 'uuid';
 import { formatPhoneNumber } from './helpers/string.js';
+import { buyVapiNumber, deleteVapiNumber } from './utilities/vapi.js';
 
 export default function Settings() {
 
@@ -43,7 +44,7 @@ export default function Settings() {
   }, [auth]);
 
   // Initialize
-  const initialize = async() => {
+  const initialize = async () => {
 
     setWorkspaceName(auth.workspace.name);
     setWorkspaceWebsite(auth.workspace.businessInfo?.website);
@@ -68,8 +69,8 @@ export default function Settings() {
       setCurrentPlan('Pro');
     } else if (auth.workspace.stripe_plan_id === BILLING_PLAN_GROWTH_STRIPE_PRICE_ID) {
       setCurrentPlan('Growth');
-    } else if (auth.workspace.stripe_plan_id === BILLING_PLAN_STARTER_STRIPE_PRICE_ID) {  
-      setCurrentPlan('Starter');  
+    } else if (auth.workspace.stripe_plan_id === BILLING_PLAN_STARTER_STRIPE_PRICE_ID) {
+      setCurrentPlan('Starter');
     }
 
     setLoading(false);
@@ -85,7 +86,7 @@ export default function Settings() {
       location: workspaceAddress ? workspaceAddress.slice(0, 1000).trim() : '',
       description: workspaceDescription ? workspaceDescription.slice(0, 1000).trim() : ''
     }
-    
+
     let res = await dbUpdateWorkspace(auth.workspace.id, _workspace);
 
     if (res) {
@@ -94,17 +95,17 @@ export default function Settings() {
     } else {
       toast.error('Error updating workspace');
     }
-  
+
   }
 
-  const handleUpgrade = async(price_id) => {
+  const handleUpgrade = async (price_id) => {
     // let url = await getStripeCheckoutSession(price_id);
     // if (url) {
     //   window.location.href = url;
     // }
   }
 
-  const getStripeCheckoutSession = async(price_id) => {
+  const getStripeCheckoutSession = async (price_id) => {
 
     setLoading(true);
 
@@ -147,7 +148,7 @@ export default function Settings() {
 
   }
 
-  const getStripePortalSession = async() => {
+  const getStripePortalSession = async () => {
 
     setLoading(true);
 
@@ -171,7 +172,7 @@ export default function Settings() {
 
   }
 
-  const refreshSubscriptionStatus = async() => {
+  const refreshSubscriptionStatus = async () => {
     setLoading(true);
     let subscription = await stripeGetSubscription(auth.workspace.stripe_subscription_id);
     console.log('subscription', subscription);
@@ -193,40 +194,51 @@ export default function Settings() {
   const buyNumber = async () => {
 
     try {
-    
-      let newNumber = await buyRetellPhoneNumber(buyNumberAreaCode, buyNumberNickname);
+
+      setLoading(true);
+
+      let newNumber = await buyVapiNumber(buyNumberNickname);
+
       if (newNumber) {
         // Add phone number to phone numbers database
-        let uuid = uuidv4();
+        let id = uuidv4();
         let phoneNumber = {
-            id: uuid,
+            id: id,
             name: buyNumberNickname,
-            number: newNumber.phone_number || null,
+            number: newNumber.number || null,
+            vapiId: newNumber.id || null,
             areaCode: buyNumberAreaCode || null,
+            provider: 'vapi',
             type: 'bought',
-            lastModificationTimestamp: newNumber.last_modification_timestamp || null,
             workspaceId: auth.workspace.id,
             createdBy: auth.user.uid,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         }
+
+        // Add phone number to database
         let res = await dbAddPhoneNumber(phoneNumber);
+        
         if (res) {
             toast.success('Phone number bought');
             setBuyNumberAreaCode('');
             setBuyNumberNickname('');
             setPhoneNumbers([...phoneNumbers, phoneNumber]);
+            setLoading(false);
         } else {
-            toast.error('Error buying phone number');
+            setLoading(false);
+            toast.error('Error buying phone number. Try a different area code.');
         }
       } else {
-        toast.error('Error buying phone number');
+        setLoading(false);
+        toast.error('Error buying phone number. Try a different area code.');
       }
 
     } catch (error) {
-      console.error('Error buying phone number', error);
-      toast.error('Error buying phone number');
+      setLoading(false);
+      toast.error('Error buying phone number. Try a different area code.');
     }
+
   }
 
   const deleteNumber = async (number) => {
@@ -237,24 +249,35 @@ export default function Settings() {
       let agents = await dbGetAgents(auth.workspace.id);
       let agent = agents.find(a => a.phoneNumber === number.id);
       if (agent) {
-          toast.error('Cannot delete a phone number associated with a receptionist');
-          return;
+        toast.error('Cannot delete a phone number associated with a receptionist');
+        return;
       }
 
+      setLoading(true);
+
+      // console.log('delete number', number);
+
       // Delete phone number from database
-      let res = await dbDeletePhoneNumber(number.id, auth.workspace.id);
+      let res = await deleteVapiNumber(number.vapiId);
       if (res) {
+        // Delete phone number from database
+        let dbRes = await dbDeletePhoneNumber(number.id, auth.workspace.id);
+        if (dbRes) {
           toast.success('Phone number deleted');
-          // Delete phone number from Retell
-          await deleteRetellPhoneNumber(number.number);
           setPhoneNumbers(phoneNumbers.filter(n => n.id !== number.id));
+          setLoading(false);
+        } else {
+          setLoading(false);
+          toast.error('Error deleting phone number from database');
+        }
       } else {
-          toast.error('Error deleting phone number');
+        setLoading(false);
+        toast.error('Error deleting phone number');
       }
 
     } catch (error) {
-        console.error('Error deleting phone number', error);
-        toast.error('Error deleting phone number');
+      setLoading(false);
+      toast.error('Error deleting phone number');
     }
 
   }
@@ -289,10 +312,10 @@ export default function Settings() {
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
-      
+
       <Heading size='4'>Settings</Heading>
 
-      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100, paddingBottom: 100 }}>  
+      <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100, paddingBottom: 100 }}>
 
         {/* Workspace */}
 
@@ -383,41 +406,42 @@ export default function Settings() {
             <Text size="1" as='div' color='gray'>Your receptionist phone number.</Text>
           </Col>
           <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+            {/* <Button onClick={() => deleteNumber('testing')}>Delete number</Button> */}
             {phoneNumbers.length === 0 ? (
               <Dialog.Root open={buyNumberDialogOpen} onOpenChange={setBuyNumberDialogOpen}>
                 <Dialog.Trigger>
                   <Button variant="surface">
                     <Phone size={16} /> Buy number
-                </Button>
-              </Dialog.Trigger>
-              <Dialog.Content>
-                <Dialog.Title>Buy number</Dialog.Title>
-                <VisuallyHidden>
-                  <Dialog.Description>Buy a new phone number. Enter the area code you want to buy a number in (US only), and add  a nickname for the number.</Dialog.Description>
-                </VisuallyHidden>
+                  </Button>
+                </Dialog.Trigger>
+                <Dialog.Content>
+                  <Dialog.Title>Buy number</Dialog.Title>
+                  <VisuallyHidden>
+                    <Dialog.Description>Buy a new phone number</Dialog.Description>
+                  </VisuallyHidden>
 
-                <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
-                <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the 3-digit area code you want to buy a number in (US only).</Text>
-                <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} />
+                  {/* <Text size="2" as="div" style={{ marginTop: 10 }}>Area code</Text>
+                  <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter the 3-digit area code you want to buy a number in (US only).</Text>
+                  <TextField.Root variant="outline" placeholder="415" maxLength={3} type="number" value={buyNumberAreaCode} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberAreaCode(e.target.value)} /> */}
 
-                <Text size="2" as="div" style={{ marginTop: 20 }}>Nickname</Text>
-                <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number you want to import. This will be used to identify the phone number in the dashboard.</Text>
-                <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
+                  <Text size="2" as="div" style={{ marginTop: 10 }}>Nick name</Text>
+                  <Text size="1" color='gray' as="div" style={{ marginTop: 0 }}>Enter a nickname for the phone number.</Text>
+                  <TextField.Root variant="outline" placeholder="My new number" value={buyNumberNickname} style={{ marginTop: 5 }} onChange={(e) => setBuyNumberNickname(e.target.value)} />
 
-                <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
-                  <Dialog.Close>
-                    <Button variant="soft" color="gray">
-                      Cancel
-                    </Button>
-                  </Dialog.Close>
-                  <Dialog.Close>
-                    <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberAreaCode.length !== 3 || buyNumberNickname.length === 0 || loading}>
-                      Buy number
-                    </Button>
-                  </Dialog.Close>
-                </Row>
+                  <Row style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 40, marginBottom: 0 }}>
+                    <Dialog.Close>
+                      <Button variant="soft" color="gray">
+                        Cancel
+                      </Button>
+                    </Dialog.Close>
+                    <Dialog.Close>
+                      <Button variant="solid" onClick={() => buyNumber()} disabled={buyNumberNickname.length === 0 || loading}>
+                        Buy number
+                      </Button>
+                    </Dialog.Close>
+                  </Row>
 
-              </Dialog.Content>
+                </Dialog.Content>
 
               </Dialog.Root>
             ) : (
@@ -460,7 +484,7 @@ export default function Settings() {
         {/* Billing */}
         <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Billing</Heading>
         <Separator style={{ width: '100%' }} />
-        
+
 
         {/* Current plan */}
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
@@ -527,7 +551,7 @@ export default function Settings() {
     </div>
   )
 
-  
+
 
 }
 

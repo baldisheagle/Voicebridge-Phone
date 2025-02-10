@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, setDoc, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAuth, signInWithPopup, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { sendVerificationEmail } from "./utilities/sendgrid";
@@ -52,9 +52,20 @@ function useProvideAuth() {
     signInWithPopup(auth, provider).then((result) => {
       // Get user
       getDoc(doc(db, "users", result.user.uid)).then(async (userDoc) => {
+        
         if (userDoc.exists()) {
+
           // Set user
           setUser(userDoc.data());
+
+          // Refresh access token
+          let token = await result.user.getIdToken();
+          if (token) {
+            updateDoc(doc(db, "users", result.user.uid), {
+              accessToken: token,
+              updatedAt: new Date(),
+            });
+          }  
           
           // Get user's default workspace - workspace.id === user.uid
           getDoc(doc(db, "workspaces", userDoc.data().uid)).then((workspaceDoc) => {
@@ -121,12 +132,12 @@ function useProvideAuth() {
         }
         
       }).catch((error) => { // Get user error
-        console.log("error", error);
+        console.log("Login error", error);
         setAuthenticating(false);
         return false;
       });
     }).catch((error) => { // Sign in with popup error
-      console.log("googleLogin error", error);
+      console.log("Login error", error);
       setAuthenticating(false);
       return false;
     });
@@ -136,11 +147,21 @@ function useProvideAuth() {
     setAuthenticating(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      
+
       // Get user data
       const userDoc = await getDoc(doc(db, "users", result.user.uid));
-      
+
       if (userDoc.exists()) {
+
+        // Refresh access token
+        let token = await result.user.getIdToken();
+        if (token) {
+          updateDoc(doc(db, "users", result.user.uid), {
+            accessToken: token,
+            updatedAt: new Date(),
+          });
+        }
+
         // Set user
         setUser(userDoc.data());
         // Get user's default workspace

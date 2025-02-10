@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRequireAuth } from './use-require-auth.js';
-import { useMediaQuery } from './shared-functions.js';
+import { useRequireAuth } from '../use-require-auth.js';
+import { useMediaQuery } from '../shared-functions.js';
 import { Row } from 'react-bootstrap';
-import { ThemeContext } from "./Theme.js";
+import { ThemeContext } from "../Theme.js";
 import { Heading, Separator, Spinner, TabNav, Text } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessProfile from './components/agent/BusinessInfo.js';
@@ -42,7 +42,7 @@ export default function Agent() {
   }
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddingBottom: 10 }}>
+    <div style={{ width: '100%', minHeight: '100vh', paddingTop: 10, paddingLeft: 10, paddinsgBottom: 10 }}>
 
       <Heading size='4'>Business Profile</Heading>
       

@@ -1,40 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { Text, Button, Dialog, VisuallyHidden, TextField, Select, TextArea, Spinner } from '@radix-ui/themes';
-import { createVapiAssistant } from '../../utilities/vapi.js';   
+import { PHONE_RECEPTIONIST_TEMPLATE } from '../config/agents.js';
+import { dbCreateAgent } from '../utilities/database.js';
+import { createReceptionist } from '../../utilities/receptionist.js';   
 import toast, { Toaster } from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { useRequireAuth } from '../../use-require-auth.js';
-import { LANGUAGES, VOICES, TIMEZONE_OFFSETS } from '../../config/lists.js';
-import { VAPI_AGENT_DEFAULTS } from '../../config/defaults.js';
-import { dbCreateAgent } from '../../utilities/database.js';
+import { useRequireAuth } from '../use-require-auth.js';
+import { LANGUAGES, VOICES, TIMEZONE_OFFSETS, AMBIENT_SOUNDS } from '../config/lists.js';
+
 export default function NewReceptionist({ onInitReceptionist }) {
 
     const auth = useRequireAuth();
 
     const [step, setStep] = useState(1);
-    
-    // VAPI Agent Defaults
-    const [agentName, setAgentName] = useState(VAPI_AGENT_DEFAULTS.name);
-    const [voiceId, setVoiceId] = useState(VAPI_AGENT_DEFAULTS.voiceId);
-    const [language, setLanguage] = useState(VAPI_AGENT_DEFAULTS.language);
-    const [model, setModel] = useState(VAPI_AGENT_DEFAULTS.model);
-    const [calendar, setCalendar] = useState(VAPI_AGENT_DEFAULTS.calendar);
-    const [calendarApiKey, setCalendarApiKey] = useState(VAPI_AGENT_DEFAULTS.calCom.apiKey);
-    const [eventId, setEventId] = useState(VAPI_AGENT_DEFAULTS.calCom.eventId);
-    const [businessName, setBusinessName] = useState(VAPI_AGENT_DEFAULTS.businessInfo.name);
-    const [timezone, setTimezone] = useState(VAPI_AGENT_DEFAULTS.businessInfo.timezone);
-    const [businessHours, setBusinessHours] = useState(VAPI_AGENT_DEFAULTS.businessInfo.businessHours);
-    const [description, setDescription] = useState(VAPI_AGENT_DEFAULTS.businessInfo.description);
-    const [website, setWebsite] = useState(VAPI_AGENT_DEFAULTS.businessInfo.website);
-    const [location, setLocation] = useState(VAPI_AGENT_DEFAULTS.businessInfo.location);
-    const [phoneNumber, setPhoneNumber] = useState(VAPI_AGENT_DEFAULTS.businessInfo.phoneNumber);
-    const [services, setServices] = useState(VAPI_AGENT_DEFAULTS.businessInfo.services);
-    const [insuranceAccepted, setInsuranceAccepted] = useState(VAPI_AGENT_DEFAULTS.businessInfo.insuranceAccepted);
-    const [ambientSound, setAmbientSound] = useState(VAPI_AGENT_DEFAULTS.ambientSound);
-    const [boostedKeywords, setBoostedKeywords] = useState(VAPI_AGENT_DEFAULTS.boostedKeywords);
-
-    // Loading states
+    const [agentName, setAgentName] = useState(PHONE_RECEPTIONIST_TEMPLATE.name);
+    const [voiceId, setVoiceId] = useState(PHONE_RECEPTIONIST_TEMPLATE.voiceId);
+    const [language, setLanguage] = useState(PHONE_RECEPTIONIST_TEMPLATE.language);
+    const [model, setModel] = useState(PHONE_RECEPTIONIST_TEMPLATE.model);
+    const [calendar, setCalendar] = useState(PHONE_RECEPTIONIST_TEMPLATE.calendar);
+    const [calendarApiKey, setCalendarApiKey] = useState(PHONE_RECEPTIONIST_TEMPLATE.calCom.apiKey);
+    const [eventId, setEventId] = useState(PHONE_RECEPTIONIST_TEMPLATE.calCom.eventId);
+    const [businessName, setBusinessName] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.name);
+    const [timezone, setTimezone] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.timezone);
+    const [businessHours, setBusinessHours] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.businessHours);
+    const [description, setDescription] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.description);
+    const [website, setWebsite] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.website);
+    const [location, setLocation] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.location);
+    const [phoneNumber, setPhoneNumber] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.phoneNumber);
+    const [services, setServices] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.services);
+    const [insuranceAccepted, setInsuranceAccepted] = useState(PHONE_RECEPTIONIST_TEMPLATE.businessInfo.insuranceAccepted);
+    const [ambientSound, setAmbientSound] = useState(PHONE_RECEPTIONIST_TEMPLATE.ambientSound);
+    const [boostedKeywords, setBoostedKeywords] = useState(PHONE_RECEPTIONIST_TEMPLATE.boostedKeywords);
     const [loading, setLoading] = useState(true);
     const [loadingReceptionist, setLoadingReceptionist] = useState(false);
 
@@ -60,37 +57,36 @@ export default function NewReceptionist({ onInitReceptionist }) {
         let agentId = uuidv4();
 
         // Update business info
-        let businessInfo = VAPI_AGENT_DEFAULTS.businessInfo;
-        businessInfo.name = businessName || VAPI_AGENT_DEFAULTS.businessInfo.name;
-        businessInfo.timezone = timezone || VAPI_AGENT_DEFAULTS.businessInfo.timezone;
-        businessInfo.location = location || VAPI_AGENT_DEFAULTS.businessInfo.location;
-        businessInfo.phoneNumber = phoneNumber || VAPI_AGENT_DEFAULTS.businessInfo.phoneNumber;
-        businessInfo.services = services || VAPI_AGENT_DEFAULTS.businessInfo.services;
-        businessInfo.insuranceAccepted = insuranceAccepted || VAPI_AGENT_DEFAULTS.businessInfo.insuranceAccepted;
+        let businessInfo = PHONE_RECEPTIONIST_TEMPLATE.businessInfo;
+        businessInfo.name = businessName || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.name;
+        businessInfo.timezone = timezone || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.timezone;
+        businessInfo.location = location || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.location;
+        businessInfo.phoneNumber = phoneNumber || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.phoneNumber;
+        businessInfo.services = services || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.services;
+        businessInfo.insuranceAccepted = insuranceAccepted || PHONE_RECEPTIONIST_TEMPLATE.businessInfo.insuranceAccepted;
 
         // Update cal.com info
-        let calCom = VAPI_AGENT_DEFAULTS.calCom;
+        let calCom = PHONE_RECEPTIONIST_TEMPLATE.calCom;
         calCom.apiKey = calendarApiKey;
         calCom.eventId = eventId;
 
-        // Build agent object
         let _agent = {
             id: agentId,
-            vapiAssistantId: null,
+            retellAgentCode: agentId,
             template: 'phone-receptionist',
             name: agentName,
             agentName: agentName,
             voiceId: voiceId,
             language: language,
             model: model,
-            includeDisclaimer: VAPI_AGENT_DEFAULTS.includeDisclaimer,
+            includeDisclaimer: PHONE_RECEPTIONIST_TEMPLATE.includeDisclaimer,
             businessInfo: businessInfo,
             ambientSound: ambientSound,
             boostedKeywords: boostedKeywords,
             calendar: calendar,
             calCom: {
-                apiKey: calendarApiKey ? calendarApiKey : VAPI_AGENT_DEFAULTS.calCom.apiKey,
-                eventId: eventId ? eventId : VAPI_AGENT_DEFAULTS.calCom.eventId,
+                apiKey: calendarApiKey ? calendarApiKey : PHONE_RECEPTIONIST_TEMPLATE.calCom.apiKey,
+                eventId: eventId ? eventId : PHONE_RECEPTIONIST_TEMPLATE.calCom.eventId,
             },
             faq: [],
             phoneNumber: null,
@@ -100,30 +96,25 @@ export default function NewReceptionist({ onInitReceptionist }) {
             updatedAt: new Date().toISOString(),
         }
 
-        // Create Vapi Assistant using agent object
-        let vapiAssistantId = await createVapiAssistant(_agent);
+        // console.log(_agent);
 
-        // Update agent with Vapi Assistant ID and create agent in database
-        if (vapiAssistantId) {
+        let res = await dbCreateAgent(_agent);
 
-            // // Update agent with Vapi Assistant ID
-            _agent.vapiAssistantId = vapiAssistantId;
-
-            // // Create agent in database
-            let res = await dbCreateAgent(_agent);
-            if (res) {
+        if (res) {
+            setLoadingReceptionist(true);
+            let retellRes = await createReceptionist(_agent);
+            if (retellRes) {
                 toast.success('Receptionist created');
                 onInitReceptionist(_agent);
             } else {
-                toast.error('Error creating agent');
+                toast.error('Error creating receptionist');
+                // TODO: Delete agent from database
                 setLoadingReceptionist(false);
             }
-
         } else {
-            toast.error('Error creating Vapi Assistant');
+            toast.error('Error creating agent');
             setLoadingReceptionist(false);
         }
-
     }
 
     return (

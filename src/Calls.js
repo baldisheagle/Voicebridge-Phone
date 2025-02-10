@@ -63,7 +63,6 @@ export default function Calls() {
   };
 
   const deleteCall = (id) => {
-    console.log('Deleting call', id);
     dbDeleteCall(auth.workspace.id, id).then(() => {
       toast.success('Call deleted');
       setCalls(calls.filter(call => call.id !== id));
@@ -178,8 +177,8 @@ export default function Calls() {
                                   <Text size="1" color="gray" as='div'>Duration</Text>
                                   <Text size="2" as='div' style={{ marginTop: 0 }}>{Math.floor(call.durationMs/60000)} min {String(Math.floor((call.durationMs%60000)/1000))} sec</Text>
 
-                                  <Text size="1" color="gray" as='div' style={{ marginTop: 10 }}>Status</Text>
-                                  <Badge size="2" as='div' style={{ marginTop: 0 }} color={call.callStatus === 'Completed' ? 'green' : call.callStatus === 'Missed' ? 'red' : 'gray'}>{call.callStatus ? call.callStatus : 'Unknown'}</Badge>
+                                  {/* <Text size="1" color="gray" as='div' style={{ marginTop: 10 }}>Status</Text>
+                                  <Badge size="2" as='div' style={{ marginTop: 0 }} color={call.callStatus === 'Completed' ? 'green' : call.callStatus === 'Missed' ? 'red' : 'gray'}>{call.callStatus ? call.callStatus : 'Unknown'}</Badge> */}
                                 
                                 </Table.Cell>
                                 <Table.Cell colSpan="3" style={{ padding: '16px', backgroundColor: 'var(--gray-1)', maxWidth: 300 }}>

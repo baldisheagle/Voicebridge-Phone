@@ -1,8 +1,9 @@
 // Utilities for Receptionist
 
-import { TIMEZONE_OFFSETS } from "../config/lists";
-import { RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT, RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM } from "../config/retell.js";
-import { createRetellLlmAndAgentForReceptionist, updateRetellAgentForReceptionist, updateRetellLlmForReceptionist } from "./retell.js";
+import { TIMEZONE_OFFSETS } from "../config/lists.js";
+import { RETELL_TEMPLATE_PHONE_RECEPTIONIST_AGENT, RETELL_TEMPLATE_PHONE_RECEPTIONIST_LLM } from "./retell.js";
+import { VAPI_PHONE_RECEPTIONIST_TEMPLATE } from "../config/templates.js";
+import { createRetellLlmAndAgentForReceptionist, updateRetellAgentForReceptionist, updateRetellLlmForReceptionist } from "./retell_apis.js";
 
 // Create Retell LLM and Agent for Receptionist
 export const createReceptionist = async (_agent) => {
@@ -106,7 +107,11 @@ export const updateReceptionistLlm = async (_agent) => {
     // Call updateRetellLlm function
     let res = await updateRetellLlmForReceptionist(_agent.retellLlmId, llm);
 
-    return llm;
+    if (res) {
+        return true;
+    } else {
+        return false;
+    }
 
 }
 
@@ -127,7 +132,11 @@ export const updateReceptionistAgent = async (agent) => {
     
     let res = await updateRetellAgentForReceptionist(agent.retellAgentId, _agent);
 
-    return _agent;
+    if (res) {
+        return true;
+    } else {
+        return false;
+    }
 
 }
 

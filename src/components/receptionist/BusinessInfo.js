@@ -7,7 +7,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { TIMEZONE_OFFSETS, HOURS } from '../../config/lists.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
 import { validateEmail } from '../../helpers/string.js';
-import { updateReceptionistLlm } from '../../utilities/receptionist.js';
+import { updateVapiAssistant } from '../../utilities/vapi.js';
 
 export default function BusinessInfo({ agent }) { 
 
@@ -74,20 +74,26 @@ export default function BusinessInfo({ agent }) {
     }
 
     try {
+      // Update Vapi assistant
+      let res = await updateVapiAssistant(_agent);
 
-      let res = await dbUpdateAgent(_agent);
       if (res) {
-        // Update Retell LLM
-        let llm = await updateReceptionistLlm(_agent);
-        toast.success('Business profile updated');
-        setLoading(false);
+        // Update agent in database
+        let dbRes = await dbUpdateAgent(_agent);
+        if (dbRes) {
+          setLoading(false);
+          toast.success('Receptionist updated');
+        } else {
+          toast.error('Error updating receptionist');
+          setLoading(false);
+        }
       } else {
-        toast.error('Error updating business profile');
+        toast.error('Error updating receptionist');
         setLoading(false);
       }
 
     } catch (error) {
-      toast.error('Error updating business profile');
+      toast.error('Error updating receptionist');
       setLoading(false);
     }
 

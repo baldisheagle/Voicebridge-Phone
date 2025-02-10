@@ -4,7 +4,6 @@ import { Col, Row } from 'react-bootstrap';
 import { Button, Heading, Spinner, Text, TextField } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { dbUpdateAgent } from '../../utilities/database.js';
-import { updateReceptionistLlm } from '../../utilities/receptionist.js';
 
 export default function Calendar({ agent }) {
 
@@ -34,15 +33,15 @@ export default function Calendar({ agent }) {
         apiKey: calApiKey
       }
     }
-    let res = await dbUpdateAgent(_agent);
-    if (res) {
-      // Update Retell LLM
-      let llm = await updateReceptionistLlm(_agent);
 
-      toast.success('Calendar updated');
+    // Update agent in database
+    let dbRes = await dbUpdateAgent(_agent);
+    if (dbRes) {
+      toast.success('Cal.com settings updated');
     } else {
-      toast.error('Error updating calendar');
+      toast.error('Error updating Cal.com settings');
     }
+
   }
 
   if (!auth || !auth.user || !auth.workspace || loading) {

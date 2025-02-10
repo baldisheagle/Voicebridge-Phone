@@ -95,7 +95,8 @@ export const SAMPLE_CALLS = [
         "durationMs": 120000,
         "workspaceId": "rBjL0zSOZUUwrfLK9yoJi5BXOwi1",
         "toNumber": "+16501234567",
-        "direction": "inbound"
+        "direction": "inbound",
+        "transcript": "Receptionist: Hello, my name is Molly, how can I help you today?  Michael: Hello, this is Michael Chen calling about booking an  appointment. I need one for next week. Can you help me with that? Receptionist: Yes ofcourse Michael, I can help you schedule your appointment. What is your preferred date and time? Michael: Next Wednesday at 2 PM would work. Receptionist: Great, that time is available. I've scheduled your appointment to Wednesday, February 26th at 2 PM. Is there anything else I can help you with? Michael: No, thank you. Receptionist: You're welcome. Have a great day. Michael: Thank you. Bye."
     },
     {
         "callSummary": "Emily Rodriguez had questions about her recent lab results and discussed the findings with the agent.",
@@ -206,7 +207,7 @@ export const SAMPLE_CALLS = [
         "endTimestamp": 1705639860000,
         "agentId": "agent_1387557ad84d87648083c5ab35",
         "recordingUrl": "https://dxc03zgurdly9.cloudfront.net/call_7a1f7402d32f0916c9931ae2799/recording.wav",
-        "callPurpose": "billing_question_request",
+        "callPurpose": "billing_question",
         "cost": {
             "total_one_time_price": 0,
             "total_duration_unit_price": 0.225,

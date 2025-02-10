@@ -6,7 +6,7 @@ import { Button, Spinner, Text, TextField, TextArea, Select, Badge } from '@radi
 import toast, { Toaster } from 'react-hot-toast';
 import { TIMEZONE_OFFSETS, HOURS } from '../../config/lists.js';
 import { dbUpdateAgent } from '../../utilities/database.js';
-import { updateRetellLlmAndAgent } from '../../utilities/retell.js';
+// import { updateRetellLlmAndAgent } from '../../utilities/retell.js';
 import { validateEmail } from '../../helpers/string.js';
 
 export default function BusinessInfo({ agent }) { 
@@ -68,14 +68,14 @@ export default function BusinessInfo({ agent }) {
       }
     }
 
-    let res = await dbUpdateAgent(_agent);
-    if (res) {
-      // Update Retell LLM and Agent
-      await updateRetellLlmAndAgent(_agent);
-      toast.success('Business profile updated');
-    } else {
-      toast.error('Error updating business profile');
-    }
+    // let res = await dbUpdateAgent(_agent);
+    // if (res) {
+    //   // Update Retell LLM and Agent
+    //   await updateRetellLlmAndAgent(_agent);
+    //   toast.success('Business profile updated');
+    // } else {
+    //   toast.error('Error updating business profile');
+    // }
 
   }
 

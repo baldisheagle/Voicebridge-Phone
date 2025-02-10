@@ -4,7 +4,6 @@ const ThemeContext = createContext();
 
 const getTheme = () => {
 
-  // return "light-theme";
   const theme = localStorage.getItem("theme");
   if (!theme) {
     localStorage.setItem("theme", "dark-theme");

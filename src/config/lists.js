@@ -1,11 +1,14 @@
 
 export const VOICES = [
-    { value: "11labs-Myra", label: "American Female" },
-    { value: "11labs-Adrian", label: "American Male" },
+    { value: "sarah", label: "American Female" },
+    { value: "29vD33N1CtxCmqQRPOHJ", label: "American Male" },
+    // { value: "11labs-Myra", label: "American Female" },
+    // { value: "11labs-Adrian", label: "American Male" },
 ];
 
 export const LANGUAGES = [
-    { value: "en-US", label: "English (US)" },
+    { value: "en", label: "English" },
+    { value: "es", label: "Spanish" },
 ];
 
 export const MODELS = [
@@ -24,23 +27,25 @@ export const CALENDARS = [
 ];
 
 export const AMBIENT_SOUNDS = [
-    { value: 'coffee-shop', label: 'Coffee Shop' },
-    { value: 'call-center', label: 'Call Center' },
+    { value: 'off', label: 'Off' },
+    { value: 'office', label: 'Office' },
+    // { value: 'coffee-shop', label: 'Coffee Shop' },
+    // { value: 'call-center', label: 'Call Center' },
 ];
 
 export const CALL_PURPOSES = [
-    { value: 'book_appointment', label: 'Book Appointment' },
-    { value: 'cancel_appointment', label: 'Cancel Appointment' },
-    { value: 'reschedule_appointment', label: 'Reschedule Appointment' },
-    { value: 'billing_question', label: 'Billing Question' },
-    { value: 'insurance_question', label: 'Insurance Question' },
-    { value: 'lab_results_question', label: 'Lab Results Question' },
-    { value: 'prescription_refill_request', label: 'Prescription Refill Request' },
-    { value: 'clinic_hours_location_question', label: 'Clinic Question' },
-    { value: 'seek_advice', label: 'Seek Advice' },
-    { value: 'request_medical_records', label: 'Request Medical Records' },
-    { value: 'unknown', label: 'Unknown' },
+    { value: 'book appointment', label: 'Book Appointment' },
+    { value: 'cancel appointment', label: 'Cancel Appointment' },
+    { value: 'reschedule appointment', label: 'Reschedule Appointment' },
+    { value: 'billing question', label: 'Billing Question' },
+    { value: 'insurance question', label: 'Insurance Question' },
+    { value: 'lab results question', label: 'Lab Results Question' },
+    { value: 'prescription refill request', label: 'Prescription Refill Request' },
+    { value: 'request for medical records', label: 'Request for Medical Records' },
+    { value: 'other question', label: 'Other Question' },
+    { value: 'feedback', label: 'Feedback' },
 ];
+
 
 export const TIMEZONE_OFFSETS = [
     { value: -10, label: 'Honolulu, Hawaii (HST) -10:00', timezone: 'Pacific/Honolulu' },

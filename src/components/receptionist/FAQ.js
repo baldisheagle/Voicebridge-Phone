@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { dbUpdateAgent } from '../../utilities/database.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Pencil, Plus, Trash } from '@phosphor-icons/react';
-import { updateReceptionistLlm } from '../../utilities/receptionist.js';
+import { updateVapiAssistant } from '../../utilities/vapi.js';
 
 export default function FAQ({ agent }) {
 
@@ -36,18 +36,33 @@ export default function FAQ({ agent }) {
       ...agent,
       faq: newFAQ,
     }
-    let res = await dbUpdateAgent(_agent);
-    if (res) {
-      // Update Retell LLM
-      let llm = await updateReceptionistLlm(_agent);
-      if (llm) {
-        toast.success('FAQ updated');
+
+    try {
+      // Update Vapi assistant
+      let res = await updateVapiAssistant(_agent);
+
+      if (res) {
+        // Update agent in database
+        let dbRes = await dbUpdateAgent(_agent);
+        if (dbRes) {
+          // TODO: Update phone number in database
+          // TODO: Link phone number to agent in Vapi
+          setLoading(false);
+          toast.success('Receptionist updated');
+        } else {
+          toast.error('Error updating receptionist');
+          setLoading(false);
+        }
       } else {
-        toast.error('Error updating FAQ');
+        toast.error('Error updating receptionist');
+        setLoading(false);
       }
-    } else {
-      toast.error('Error updating FAQ');
+
+    } catch (error) {
+      toast.error('Error updating receptionist');
+      setLoading(false);
     }
+  
   }
 
   // Add FAQ
@@ -92,7 +107,7 @@ export default function FAQ({ agent }) {
     
     return (
       <Card style={{ padding: 20, marginBottom: 20 }}>
-        <Text size="3" as='div' weight="bold">{faq.question}</Text>
+        <Text size="2" as='div' weight="bold">{faq.question}</Text>
         <Text size="2" as='div' style={{ marginTop: 5 }}>{faq.answer}</Text>
         <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
           <Dialog.Root>
