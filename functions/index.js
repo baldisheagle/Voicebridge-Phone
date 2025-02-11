@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { Retell } = require("retell-sdk");
 const z = require('zod');
+const chrono = require('chrono-node');
 
 // Firebase
 const { onRequest } = require("firebase-functions/v2/https");
@@ -36,6 +37,35 @@ const emailTemplates = {
 
 // Allowed origins
 const allowedOrigins = ['https://voicebridge-app.web.app', 'https://app.voicebridgeai.com']; // , 'http://localhost:3000'
+
+// Timezones
+const TIMEZONE_OFFSETS = [
+  { value: -10, label: 'Honolulu, Hawaii (HST) -10:00', timezone: 'Pacific/Honolulu' },
+  { value: -9, label: 'Anchorage, Alaska (AKST) -9:00', timezone: 'America/Anchorage' },
+  { value: -8, label: 'Los Angeles, USA (PST) -8:00', timezone: 'America/Los_Angeles' },
+  { value: -7, label: 'Denver, USA (MST) -7:00', timezone: 'America/Denver' },
+  { value: -6, label: 'Chicago, USA (CST) -6:00', timezone: 'America/Chicago' },
+  { value: -5, label: 'New York, USA (EST) -5:00', timezone: 'America/New_York' },
+  { value: -4, label: 'Santiago, Chile (CLT) -4:00', timezone: 'America/Santiago' },
+  { value: -3, label: 'São Paulo, Brazil (BRT) -3:00', timezone: 'America/Sao_Paulo' },
+  { value: -2, label: 'Fernando de Noronha, Brazil (FNT) -2:00', timezone: 'America/Noronha' },
+  { value: -1, label: 'Azores (AZOT) -1:00', timezone: 'Atlantic/Azores' },
+  { value: 0, label: 'London, United Kingdom (GMT) 0:00', timezone: 'Europe/London' },
+  { value: 1, label: 'Paris, France (CET) +1:00', timezone: 'Europe/Paris' },
+  { value: 2, label: 'Cairo, Egypt (EET) +2:00', timezone: 'Africa/Cairo' },
+  { value: 3, label: 'Moscow, Russia (MSK) +3:00', timezone: 'Europe/Moscow' },
+  { value: 3.5, label: 'Tehran, Iran (IRST) +3:30', timezone: 'Asia/Tehran' },
+  { value: 4, label: 'Dubai, UAE (GST) +4:00', timezone: 'Asia/Dubai' },
+  { value: 5, label: 'Karachi, Pakistan (PKT) +5:00', timezone: 'Asia/Karachi' },
+  { value: 5.5, label: 'Mumbai, India (IST) +5:30', timezone: 'Asia/Kolkata' },
+  { value: 6, label: 'Dhaka, Bangladesh (BST) +6:00', timezone: 'Asia/Dhaka' },
+  { value: 7, label: 'Bangkok, Thailand (ICT) +7:00', timezone: 'Asia/Bangkok' },
+  { value: 8, label: 'Hong Kong (HKT) +8:00', timezone: 'Asia/Hong_Kong' },
+  { value: 9, label: 'Tokyo, Japan (JST) +9:00', timezone: 'Asia/Tokyo' },
+  { value: 10, label: 'Sydney, Australia (AEST) +10:00', timezone: 'Australia/Sydney' },
+  { value: 11, label: 'Noumea, New Caledonia (NCT) +11:00', timezone: 'Pacific/Noumea' },
+  { value: 12, label: 'Auckland, New Zealand (NZST) +12:00', timezone: 'Pacific/Auckland' },
+];
 
 // Cors options
 const corsOptions = {
@@ -177,7 +207,7 @@ exports.vapiCheckCalendarAvailabilityCalCom = onRequest({
   invoker: 'public'
 }, async (req, res) => {
 
-  console.log('Vapi - Check Cal.com availability', req.headers, req.body);
+  console.log('Vapi - Check Cal.com availability');
 
   // Verify Vapi secret
   const secret = req.headers['x-vapi-secret'];
@@ -189,46 +219,96 @@ exports.vapiCheckCalendarAvailabilityCalCom = onRequest({
   }
 
   const toolCallId = req.body.message.toolCalls[0].id;
-  const arguments = req.body.message?.toolCalls[0]?.function?.arguments;
   const assistantId = req.body.message.assistant && req.body.message.assistant.id ? req.body.message.assistant.id : null;
+  const arguments = req.body.message?.toolCalls[0]?.function?.arguments || null;
+  const timeRequested = arguments && arguments.date_time ? arguments.date_time : null;
 
   console.log('Assistant ID', assistantId);
   console.log('Arguments', arguments);
+  console.log('Time requested', timeRequested);
 
-  // Get assistant
-  const assistants = await db.collection('assistants').where('vapiAssistantId', '==', assistantId).limit(1).get();
+  try {
 
-  if (assistants.docs.length === 0) {
-    console.error('Assistant not found');
-    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
-    return;
-  }
+    // Get assistant
+    const assistants = await db.collection('agents').where('vapiAssistantId', '==', assistantId).limit(1).get();
 
-  // If assistant is found, extract cal.com api key and event ID
-  const assistant = assistants.docs[0].data();
-
-  console.log('Assistant', assistant);
-
-  if (assistant.calCom?.apiKey && assistant.calCom?.eventId) {
-
-    // Check availability
-    const dateTime = arguments.date_time;
-    if (dateTime) {
-
+    if (assistants.docs.length === 0) {
+      console.error('Assistant not found');
+      res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
+      return;
     }
 
+    // If assistant is found, extract cal.com api key and event ID
+    const assistant = assistants.docs[0].data();
 
-    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "That time is available." }] }));
+    // Extract calComApiKey, calComEventId, and timezone from assistant
+    const calComApiKey = assistant.calCom?.apiKey;
+    const calComEventId = assistant.calCom?.eventId;
+    const timezoneOffset = assistant.businessInfo?.timezone ? assistant.businessInfo.timezone : -8; // Default to PST if timezone is not set
+    const timezone = assistant.businessInfo?.timezone ? TIMEZONE_OFFSETS.find(offset => offset.value === timezoneOffset).timezone : 'America/Los_Angeles';
+
+    if (!calComApiKey || !calComEventId || !timezone) {
+      console.error('Cal.com API key, event ID, or timezone not found');
+      res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
+      return;
+    }
+
+    // Use Chrono to convert start time, along with timezone, into ISO string
+    let dateInstant = new Date();
+    const localTime = chrono.parseDate(timeRequested, dateInstant, {
+      forwardDate: true
+    });
+    
+    const startTime = new Date(localTime.getTime() + ((timezoneOffset * -1) * 60 * 60 * 1000));
+    const endTime = new Date(new Date(startTime).getTime() + 24 * 60 * 60 * 1000);
+
+
+    // Call Cal.com API to check availability
+    const options = {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${calComApiKey}` }
+    };
+
+    const calComResponse = await fetch(`https://api.cal.com/v2/slots/available?eventTypeId=${calComEventId}&startTime=${startTime.toISOString()}&endTime=${endTime.toISOString()}&timezone=${timezone}`, options);
+
+    const calComData = await calComResponse.json();
+
+    // Extract all slots from the nested structure
+    let allSlots = [];
+    if (calComData.data && calComData.data.slots) {
+      allSlots = Object.values(calComData.data.slots)
+        .flat()
+        .map(slot => ({
+            startTime: new Date(slot.time).toISOString(),
+        }));
+    }
+
+    // Check if the requested time is available
+    const isSlotAvailable = allSlots.some(slot => slot.startTime === startTime.toISOString());
+
+    let availability = ""
+
+    if (isSlotAvailable) {
+      availability = "The requested time is available";
+    } else if (allSlots.length === 0) {
+      availability = "The requested time is not available. Choose a different day and time";
+    } else {
+      availability = "The requested time is not available, but here are the available slots:";
+      allSlots.slice(0, 3).forEach(slot => {
+        availability += new Date(slot.startTime).toLocaleString('en-US', { timeZone: timezone, weekday: 'long', hour: 'numeric', minute: '2-digit' }) + "\n";
+      });
+    }
+
+    res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: availability }] }));
     return;
 
-  } else {
-    console.error('Cal.com API key or event ID not found');
+  } catch (error) {
+    console.error('Error checking availability', error);
     res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the time is not available." }] }));
     return;
   }
 
 });
-
 
 /*
   Function: Vapi - Book event on Cal.com
@@ -242,9 +322,9 @@ exports.vapiBookEventOnCalCom = onRequest({
   enforceAppCheck: false,
   cors: true,
   invoker: 'public'
-}, (req, res) => {
+}, async (req, res) => {
 
-  // console.log('Vapi - Book event on Cal.com', req.headers, req.body);
+  console.log('Vapi - Book event on Cal.com');
 
   // Verify Vapi secret
   const secret = req.headers['x-vapi-secret'];
@@ -258,18 +338,85 @@ exports.vapiBookEventOnCalCom = onRequest({
   const toolCallId = req.body.message.toolCalls[0].id;
   const assistantId = req.body.message?.assistant?.id ? req.body.message.assistant.id : null;
   const arguments = req.body.message?.toolCalls[0]?.function?.arguments;
+  const timeRequested = arguments && arguments.date_time ? arguments.date_time : null;
+  const callerName = arguments && arguments.name_of_caller ? arguments.name_of_caller : 'Anonymous';
+  const appointmentReason = arguments && arguments.appointment_reason ? arguments.appointment_reason : 'Unknown';
 
   console.log('Assistant ID', assistantId);
   console.log('Arguments', arguments);
+  console.log('Time requested', timeRequested);
+  console.log('Caller name', callerName);
+  console.log('Appointment reason', appointmentReason);
 
-  res.status(200).send(JSON.stringify({
-    "results": [
-      {
-        "toolCallId": toolCallId,
-        "result": "Event booked successfully."
-      }
-    ]
-  }));
+  try {
+
+    // Get assistant
+    const assistants = await db.collection('agents').where('vapiAssistantId', '==', assistantId).limit(1).get();
+
+    if (assistants.docs.length === 0) {
+      console.error('Assistant not found');
+      res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the appointment could not be booked." }] }));
+      return;
+    }
+
+    // If assistant is found, extract cal.com api key and event ID
+    const assistant = assistants.docs[0].data();
+
+    // Extract calComApiKey, calComEventId, and timezone from assistant
+    const calComApiKey = assistant.calCom?.apiKey;
+    const calComEventId = assistant.calCom?.eventId;
+    const timezoneOffset = assistant.businessInfo?.timezone ? assistant.businessInfo.timezone : -8; // Default to PST if timezone is not set
+    const timezone = assistant.businessInfo?.timezone ? TIMEZONE_OFFSETS.find(offset => offset.value === timezoneOffset).timezone : 'America/Los_Angeles';
+
+    if (!calComApiKey || !calComEventId || !timezone) {
+      console.error('Cal.com API key, event ID, or timezone not found');
+      res.status(200).send(JSON.stringify({ results: [{ toolCallId: toolCallId, result: "Sorry, the appointment could not be booked." }] }));
+      return;
+    }
+
+    // Use Chrono to convert start time, along with timezone, into ISO string
+    let dateInstant = new Date();
+    const localTime = chrono.parseDate(timeRequested, dateInstant, {
+      forwardDate: true
+    });
+    const startTime = new Date(localTime.getTime() + ((timezoneOffset * -1) * 60 * 60 * 1000));
+
+    // Book event on Cal.com
+    const options = {
+      method: 'POST',
+      headers: {
+          Authorization: `Bearer ${calComApiKey}`,
+          'cal-api-version': '2024-08-13',
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+          "start": startTime.toISOString(),
+          "eventTypeId": parseInt(calComEventId),
+          "attendee": {
+              name: callerName,
+              email: "jane@example.com",
+              timeZone: timezone,
+              phoneNumber: "+1234567890",
+              language: "en"
+          },
+      })
+    };
+
+    let calComResponse = await fetch('https://api.cal.com/v2/bookings', options);
+
+    let calComResponseJson = await calComResponse.json();
+
+    // If the appointment is booked successfully, send a success message
+    if (calComResponseJson && calComResponseJson.status === 'success') {
+      res.status(200).send(JSON.stringify({ "results": [{ "toolCallId": toolCallId, "result": "Appointment booked successfully." }] }));
+    } else {
+      res.status(200).send(JSON.stringify({ "results": [{ "toolCallId": toolCallId, "result": "Appointment could not be booked." }] }));
+    }
+
+  } catch (error) {
+    console.error('Error booking appointment', error);
+    res.status(200).send(JSON.stringify({ "results": [{ "toolCallId": toolCallId, "result": "Appointment could not be booked." }] }));
+  }
 
 });
 
@@ -394,7 +541,7 @@ exports.vapiCreateAssistant = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    console.log('Vapi - Create Assistant', req.headers, req.body);
+    console.log('Vapi - Create Assistant');
 
     if (req.body && req.body.assistant) {
       
@@ -411,7 +558,7 @@ exports.vapiCreateAssistant = onRequest((req, res) => {
         const assistant = await client.assistants.create(req.body.assistant);
 
         if (assistant) {
-          console.log('Assistant created', assistant);
+          console.log('Assistant created');
           res.status(200).send(JSON.stringify({ id: assistant.id }));
         } else {
           console.error('Error creating assistant', assistant);
@@ -447,13 +594,13 @@ exports.vapiUpdateAssistant = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    console.log('Vapi - Update Assistant', req.headers, req.body);
+    console.log('Vapi - Update Assistant');
 
     if (req.body && req.body.assistant_id && req.body.assistant) {
       console.log('Assistant ID', req.body.assistant_id);
-      console.log('Assistant', req.body.assistant);
 
       try {
+
         // Create client
         const client = new VapiClient({
           token: process.env.REACT_APP_VAPI_API_KEY,
@@ -496,7 +643,7 @@ exports.vapiDeleteAssistant = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    console.log('Vapi - Delete Assistant', req.headers, req.body);
+    console.log('Vapi - Delete Assistant');
 
     if (req.body && req.body.assistant_id) {
       console.log('Assistant ID', req.body.assistant_id);
@@ -539,7 +686,7 @@ exports.vapiBuyNumber = onRequest((req, res) => {
 
   corsMiddleware(req, res, async () => {
 
-    if (req.body && req.body.nickname) {
+    if (req.body && req.body.nickname && req.body.areaCode) {
 
       try {
 
@@ -552,20 +699,21 @@ exports.vapiBuyNumber = onRequest((req, res) => {
         const number = await client.phoneNumbers.create({
           provider: 'vapi',
           name: req.body.nickname,
+          numberDesiredAreaCode: req.body.areaCode,
         });
 
         if (number) {
           console.log('Number bought', number);
-          res.status(200).send(JSON.stringify({ number: number }));
+          res.status(200).send(JSON.stringify(number));
         } else {
-          console.error('Error buying number', number);
-          res.status(500).send(JSON.stringify({ error: "Error buying number" }));
+          console.error('New number format error', number);
+          res.status(500).send(JSON.stringify({ error: "New number format error" }));
           return;
         }
         
       } catch (error) {
         console.error('Error buying number', error);
-        res.status(500).send(JSON.stringify({ error: "Error buying number" }));
+        res.status(500).send(JSON.stringify({ error: "Error buying number", details: error }));
         return;
       }
 

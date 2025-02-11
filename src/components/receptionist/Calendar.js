@@ -12,6 +12,7 @@ export default function Calendar({ agent }) {
   const [calEventTypeId, setCalEventTypeId] = useState(agent.calCom ? agent.calCom.eventId : null);
   const [calApiKey, setCalApiKey] = useState(agent.calCom ? agent.calCom.apiKey : null);
   const [loading, setLoading] = useState(true);
+  const [calUpdating, setCalUpdating] = useState(false);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
@@ -26,6 +27,7 @@ export default function Calendar({ agent }) {
 
   // Save cal
   const saveCal = async () => {
+    setCalUpdating(true);
     let _agent = {
       ...agent,
       calCom: {
@@ -34,12 +36,22 @@ export default function Calendar({ agent }) {
       }
     }
 
+    try {
+
     // Update agent in database
     let dbRes = await dbUpdateAgent(_agent);
+
     if (dbRes) {
+      setCalUpdating(false);
       toast.success('Cal.com settings updated');
-    } else {
+      } else {
+        toast.error('Error updating Cal.com settings');
+        setCalUpdating(false);
+      }
+
+    } catch (error) {
       toast.error('Error updating Cal.com settings');
+      setCalUpdating(false);
     }
 
   }
@@ -93,7 +105,7 @@ export default function Calendar({ agent }) {
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Button variant="solid" onClick={saveCal}>Save changes</Button>
+          <Button variant="solid" onClick={saveCal} loading={calUpdating}>{calUpdating ? 'Saving...' : 'Save changes'}</Button>
         </Col>
       </Row>
 

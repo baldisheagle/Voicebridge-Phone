@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
-import { Select, Spinner, Text, TextField, Button, Switch, Separator, AlertDialog } from '@radix-ui/themes';
+import { Select, Spinner, Text, TextField, Button, Link } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import { LANGUAGES, VOICES, AMBIENT_SOUNDS } from '../../config/lists.js';
-import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents, dbDeleteAgent } from '../../utilities/database.js';
-// import { connectRetellPhoneNumberToAgent, deleteRetellAgent } from '../../archived/retell_apis.js';
-// import { updateReceptionistAgent, updateReceptionistLlm } from '../../utilities/receptionist.js';
+import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
-import { Trash } from '@phosphor-icons/react';
-import { deleteVapiAssistant, linkPhoneNumberToAssistant, updateVapiAssistant } from '../../utilities/vapi.js';
+import { linkPhoneNumberToAssistant, updateVapiAssistant } from '../../utilities/vapi.js';
 
 export default function General({ agent, onDeleteReceptionist }) {
 
   const auth = useRequireAuth();
+  const navigate = useNavigate();
 
   const [language, setLanguage] = useState(agent.language);
   const [agentName, setAgentName] = useState(agent.agentName);
@@ -25,6 +24,7 @@ export default function General({ agent, onDeleteReceptionist }) {
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [receptionistUpdating, setReceptionistUpdating] = useState(false);
 
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
@@ -45,14 +45,14 @@ export default function General({ agent, onDeleteReceptionist }) {
 
   const updateReceptionist = async () => {
 
-    setLoading(true);
+    setReceptionistUpdating(true);
 
     // If the number if not null, make sure the phone number is not connected to another agent that is not this one
     if (agentPhoneNumber) {
       let a = agents.find(a => a.phoneNumber === agentPhoneNumber && a.id !== agent.id);
       if (a) {
         toast.error('This phone number is already connected to another agent');
-        setLoading(false);
+        setReceptionistUpdating(false);
         return;
       }
     }
@@ -88,11 +88,11 @@ export default function General({ agent, onDeleteReceptionist }) {
         // Update agent in database
         let dbRes = await dbUpdateAgent(_agent);
         if (dbRes) {
-          setLoading(false);
+          setReceptionistUpdating(false);
           toast.success('Receptionist updated');
         } else {
           toast.error('Error updating receptionist');
-          setLoading(false);
+          setReceptionistUpdating(false);
         }
       } else {
         toast.error('Error updating receptionist');
@@ -100,31 +100,11 @@ export default function General({ agent, onDeleteReceptionist }) {
       }
 
     } catch (error) {
+      console.error('Error updating receptionist', error);
       toast.error('Error updating receptionist');
-      setLoading(false);
+      setReceptionistUpdating(false);
     }
 
-  }
-
-  const deleteReceptionist = async () => {
-    setLoading(true);
-    let res = await deleteVapiAssistant(agent.vapiAssistantId);
-    if (res) {
-      // Delete agent from database
-      let dbRes = await dbDeleteAgent(auth.workspace.id, agent.id);
-      if (dbRes) {
-        // Call onDeleteReceptionist callback
-        onDeleteReceptionist();
-        toast.success('Receptionist deleted');
-        setLoading(false);
-      } else {
-        toast.error('Error deleting receptionist');
-        setLoading(false);
-      }
-    } else {
-      toast.error('Error deleting receptionist');
-      setLoading(false);
-    }
   }
 
   if (!auth || !auth.user || !auth.workspace || loading) {
@@ -144,7 +124,7 @@ export default function General({ agent, onDeleteReceptionist }) {
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Phone number</Text>
-          <Text size="1" as='div' color='gray'>The phone number of your business.</Text>
+          <Text size="1" as='div' color='gray'>The phone number of your business. Buy or import a new number <Link style={{ cursor: 'pointer', color: 'var(--accent-12)' }} onClick={() => navigate('/phone-numbers')}>here</Link>.</Text>
         </Col>
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <Text size="4" weight="medium">{}</Text>
@@ -248,47 +228,13 @@ export default function General({ agent, onDeleteReceptionist }) {
       </Row> */}
 
       {/* TODO: End call on silence timeout */}
-      
+
       {/* TODO: Max duration of call */}
 
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Button variant="solid" onClick={updateReceptionist}>Save changes</Button>
-        </Col>
-      </Row>
-
-      <Separator style={{ marginTop: 40, width: '100%' }} />
-
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
-        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Text size="2" weight="bold">Delete receptionist</Text>
-          <Text size="1" as='div' color='gray'>Permanently delete your receptionist.</Text>
-        </Col>
-        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
-          <AlertDialog.Root>
-            <AlertDialog.Trigger>
-              <Button variant="surface" color='red'><Trash size={16} /> Delete</Button>
-            </AlertDialog.Trigger>
-            <AlertDialog.Content>
-              <AlertDialog.Title>Delete Receptionist</AlertDialog.Title>
-              <AlertDialog.Description>
-                Are you sure you want to delete this receptionist? This action cannot be undone.
-              </AlertDialog.Description>
-              <Row className="mt-4" style={{ justifyContent: 'flex-end', marginLeft: 0, marginRight: 0 }}>
-                <Col xs="auto" style={{ paddingRight: 10 }}>
-                  <AlertDialog.Cancel>
-                    <Button variant="soft" color="gray">Cancel</Button>
-                  </AlertDialog.Cancel>
-                </Col>
-                <Col xs="auto">
-                  <AlertDialog.Action>
-                    <Button variant="solid" color="red" onClick={deleteReceptionist}>Delete</Button>
-                  </AlertDialog.Action>
-                </Col>
-              </Row>
-            </AlertDialog.Content>
-          </AlertDialog.Root>
+          <Button variant="solid" onClick={updateReceptionist} loading={receptionistUpdating}>Save changes</Button>
         </Col>
       </Row>
 

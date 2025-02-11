@@ -56,7 +56,7 @@ export default function Notifications({ agent }) {
     <div style={{ width: '100%' }}>
 
       {/* Email notifications */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 20 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Email to notify</Text>
           <Text size="1" as='div' color='gray'>Receive email notifications to this email address when a new message is received.</Text>

@@ -90,7 +90,7 @@ export const deleteVapiAssistant = async (assistantId) => {
 }
 
 // Buy Vapi number
-export const buyVapiNumber = async (nickname) => {
+export const buyVapiNumber = async (nickname, areaCode) => {
 
     let url = 'http://127.0.0.1:5001/voicebridge-app/us-central1/vapiBuyNumber';
     if (process.env.REACT_APP_APP_MODE === 'production') {
@@ -102,14 +102,16 @@ export const buyVapiNumber = async (nickname) => {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ nickname: nickname })
+        body: JSON.stringify({ nickname: nickname, areaCode: areaCode })
     });
 
+    let resJson = await res.json();
+
     if (res.status !== 200) {
+        // console.log('Error buying number', resJson);
         return false;
     } else {
-        let data = await res.json();
-        return data.number;
+        return resJson;
     }   
 
 }

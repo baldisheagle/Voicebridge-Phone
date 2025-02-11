@@ -189,10 +189,10 @@ export default function FAQ({ agent }) {
 
       {/* FAQ */}    
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 10 }}>
-        <Col xs={12} sm={12} md={6} lg={4} xl={4} style={{ padding: 10 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 10 }}>
           <Text size="2" as='div' color='gray'>{faq.length} questions</Text>
         </Col>
-        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 10, textAlign: 'right' }}>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 10, textAlign: 'right' }}>
           <Dialog.Root>
             <Dialog.Trigger>
               <Button variant="outline">Add <Plus weight="bold" size={16} /></Button>

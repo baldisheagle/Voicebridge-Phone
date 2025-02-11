@@ -2,12 +2,12 @@
 
 export const VAPI_AGENT_DEFAULTS = {
     name: "Sally",
-    voiceId: "sarah",
+    voiceId: "56AoDkrOh6qfVPDXZ7Pt",
     language: "en",
     model: "gpt-4o-mini",
     includeDisclaimer: true,
     calendar: "cal.com",
-    ambientSound: "default",
+    ambientSound: "off",
     boostedKeywords: "",
     endCallOnSilence: 10,
     maxDuration: 10,

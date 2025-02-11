@@ -161,7 +161,7 @@ export default function SidebarComponent(props) {
                 onClick={() => navigate("/receptionist")}>Receptionist
               </MenuItem>
 
-              {/* <MenuItem 
+              <MenuItem 
                 label="Phone Numbers"
                 active={location.pathname === '/phone-numbers' ? true : false} 
                 icon={<Phone size={15} weight="bold" />}
@@ -171,7 +171,7 @@ export default function SidebarComponent(props) {
                   },
                 }}
                 onClick={() => navigate("/phone-numbers")}>Phone Numbers
-              </MenuItem> */}
+              </MenuItem>
 
 
               {/* <MenuItem 

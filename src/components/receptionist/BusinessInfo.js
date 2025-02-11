@@ -26,7 +26,8 @@ export default function BusinessInfo({ agent }) {
   const [insuranceAccepted, setInsuranceAccepted] = useState(agent.businessInfo.insuranceAccepted || '');
   const [email, setEmail] = useState(agent.businessInfo.email || '');
   const [loading, setLoading] = useState(true);
-
+  const [businessInfoUpdating, setBusinessInfoUpdating] = useState(false);
+  
   useEffect(() => {
     if (auth && auth.user && auth.workspace) {
       initialize();
@@ -41,18 +42,18 @@ export default function BusinessInfo({ agent }) {
   // Save business profile
   const saveBusinessInfo = async () => {
 
-    setLoading(true);
+    setBusinessInfoUpdating(true);
 
     if (name.length === 0) {
       toast.error('Business name is required');
-      setLoading(false);
+      setBusinessInfoUpdating(false);
       return;
     }
 
     // Check if email is valid
     if (email.length > 0 && !validateEmail(email)) {
       toast.error('Invalid email');
-      setLoading(false);
+      setBusinessInfoUpdating(false);
       return;
     }
 
@@ -81,20 +82,20 @@ export default function BusinessInfo({ agent }) {
         // Update agent in database
         let dbRes = await dbUpdateAgent(_agent);
         if (dbRes) {
-          setLoading(false);
+          setBusinessInfoUpdating(false);
           toast.success('Receptionist updated');
         } else {
           toast.error('Error updating receptionist');
-          setLoading(false);
+          setBusinessInfoUpdating(false);
         }
       } else {
         toast.error('Error updating receptionist');
-        setLoading(false);
+        setBusinessInfoUpdating(false);
       }
 
     } catch (error) {
       toast.error('Error updating receptionist');
-      setLoading(false);
+      setBusinessInfoUpdating(false);
     }
 
   }
@@ -263,7 +264,7 @@ export default function BusinessInfo({ agent }) {
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
-          <Button variant="solid" onClick={saveBusinessInfo}>Save changes</Button>
+          <Button variant="solid" onClick={saveBusinessInfo} disabled={businessInfoUpdating}>{businessInfoUpdating ? 'Saving...' : 'Save changes'}</Button>
         </Col>
       </Row>
 

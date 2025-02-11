@@ -8,6 +8,7 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { LANGUAGES, VOICES, TIMEZONE_OFFSETS } from '../../config/lists.js';
 import { VAPI_AGENT_DEFAULTS } from '../../config/defaults.js';
 import { dbCreateAgent } from '../../utilities/database.js';
+
 export default function NewReceptionist({ onInitReceptionist }) {
 
     const auth = useRequireAuth();
@@ -36,7 +37,7 @@ export default function NewReceptionist({ onInitReceptionist }) {
 
     // Loading states
     const [loading, setLoading] = useState(true);
-    const [loadingReceptionist, setLoadingReceptionist] = useState(false);
+    const [creatingReceptionist, setCreatingReceptionist] = useState(false);
 
     useEffect(() => {
         if (auth && auth.user && auth.workspace) {
@@ -57,71 +58,81 @@ export default function NewReceptionist({ onInitReceptionist }) {
 
     const initReceptionist = async () => {
 
-        let agentId = uuidv4();
+        try {
 
-        // Update business info
-        let businessInfo = VAPI_AGENT_DEFAULTS.businessInfo;
-        businessInfo.name = businessName || VAPI_AGENT_DEFAULTS.businessInfo.name;
-        businessInfo.timezone = timezone || VAPI_AGENT_DEFAULTS.businessInfo.timezone;
-        businessInfo.location = location || VAPI_AGENT_DEFAULTS.businessInfo.location;
-        businessInfo.phoneNumber = phoneNumber || VAPI_AGENT_DEFAULTS.businessInfo.phoneNumber;
-        businessInfo.services = services || VAPI_AGENT_DEFAULTS.businessInfo.services;
-        businessInfo.insuranceAccepted = insuranceAccepted || VAPI_AGENT_DEFAULTS.businessInfo.insuranceAccepted;
+            setCreatingReceptionist(true);
 
-        // Update cal.com info
-        let calCom = VAPI_AGENT_DEFAULTS.calCom;
-        calCom.apiKey = calendarApiKey;
-        calCom.eventId = eventId;
+            let agentId = uuidv4();
 
-        // Build agent object
-        let _agent = {
-            id: agentId,
-            vapiAssistantId: null,
-            template: 'phone-receptionist',
-            name: agentName,
-            agentName: agentName,
-            voiceId: voiceId,
-            language: language,
-            model: model,
-            includeDisclaimer: VAPI_AGENT_DEFAULTS.includeDisclaimer,
-            businessInfo: businessInfo,
-            ambientSound: ambientSound,
-            boostedKeywords: boostedKeywords,
-            calendar: calendar,
-            calCom: {
-                apiKey: calendarApiKey ? calendarApiKey : VAPI_AGENT_DEFAULTS.calCom.apiKey,
-                eventId: eventId ? eventId : VAPI_AGENT_DEFAULTS.calCom.eventId,
-            },
-            faq: [],
-            phoneNumber: null,
-            workspaceId: auth.workspace.id,
-            createdBy: auth.user.uid,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        }
+            // Update business info
+            let businessInfo = VAPI_AGENT_DEFAULTS.businessInfo;
+            businessInfo.name = businessName || VAPI_AGENT_DEFAULTS.businessInfo.name;
+            businessInfo.timezone = timezone || VAPI_AGENT_DEFAULTS.businessInfo.timezone;
+            businessInfo.location = location || VAPI_AGENT_DEFAULTS.businessInfo.location;
+            businessInfo.phoneNumber = phoneNumber || VAPI_AGENT_DEFAULTS.businessInfo.phoneNumber;
+            businessInfo.services = services || VAPI_AGENT_DEFAULTS.businessInfo.services;
+            businessInfo.insuranceAccepted = insuranceAccepted || VAPI_AGENT_DEFAULTS.businessInfo.insuranceAccepted;
 
-        // Create Vapi Assistant using agent object
-        let vapiAssistantId = await createVapiAssistant(_agent);
+            // Update cal.com info
+            let calCom = VAPI_AGENT_DEFAULTS.calCom;
+            calCom.apiKey = calendarApiKey;
+            calCom.eventId = eventId;
 
-        // Update agent with Vapi Assistant ID and create agent in database
-        if (vapiAssistantId) {
-
-            // // Update agent with Vapi Assistant ID
-            _agent.vapiAssistantId = vapiAssistantId;
-
-            // // Create agent in database
-            let res = await dbCreateAgent(_agent);
-            if (res) {
-                toast.success('Receptionist created');
-                onInitReceptionist(_agent);
-            } else {
-                toast.error('Error creating agent');
-                setLoadingReceptionist(false);
+            // Build agent object
+            let _agent = {
+                id: agentId,
+                vapiAssistantId: null,
+                template: 'phone-receptionist',
+                name: agentName,
+                agentName: agentName,
+                voiceId: voiceId,
+                language: language,
+                model: model,
+                includeDisclaimer: VAPI_AGENT_DEFAULTS.includeDisclaimer,
+                businessInfo: businessInfo,
+                ambientSound: ambientSound,
+                boostedKeywords: boostedKeywords,
+                calendar: calendar,
+                calCom: {
+                    apiKey: calendarApiKey ? calendarApiKey : VAPI_AGENT_DEFAULTS.calCom.apiKey,
+                    eventId: eventId ? eventId : VAPI_AGENT_DEFAULTS.calCom.eventId,
+                },
+                faq: [],
+                phoneNumber: null,
+                workspaceId: auth.workspace.id,
+                createdBy: auth.user.uid,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             }
 
-        } else {
-            toast.error('Error creating Vapi Assistant');
-            setLoadingReceptionist(false);
+            // Create Vapi Assistant using agent object
+            let vapiAssistantId = await createVapiAssistant(_agent);
+
+            // Update agent with Vapi Assistant ID and create agent in database
+            if (vapiAssistantId) {
+
+                // // Update agent with Vapi Assistant ID
+                _agent.vapiAssistantId = vapiAssistantId;
+
+                // // Create agent in database
+                let res = await dbCreateAgent(_agent);
+                if (res) {
+                    toast.success('Receptionist created');
+                    setCreatingReceptionist(false);
+                    onInitReceptionist(_agent);
+                } else {
+                    toast.error('Error creating agent');
+                    setCreatingReceptionist(false);
+                }
+
+            } else {
+                toast.error('Error creating receptionist. Please try again.');
+                setCreatingReceptionist(false);
+            }
+
+        } catch (error) {
+            toast.error('Error creating receptionist. Please try again.');
+            setCreatingReceptionist(false);
         }
 
     }
@@ -252,16 +263,6 @@ export default function NewReceptionist({ onInitReceptionist }) {
                             <Text size="2" as='div' color='gray'>3. To find your Event Type ID, go to "Event Types" and click on the event you want to use</Text>
                             <Text size="2" as='div' color='gray'>4. The ID is the number at the end of the URL (e.g. cal.com/event-types/123)</Text>
 
-                            {/* <Text size="2" weight="bold" as='div' style={{ marginTop: 20 }}>Calendar Platform</Text>
-                            <Select.Root value={calendar} onValueChange={(value) => setCalendar(value)}>
-                                <Select.Trigger variant="surface" color="gray" placeholder="Select a calendar" />
-                                <Select.Content>
-                                    {CALENDARS.map((option, index) => (
-                                        <Select.Item key={index} value={option.value}>{option.label}</Select.Item>
-                                    ))}
-                                </Select.Content>
-                            </Select.Root> */}
-
                             <Text size="2" weight="bold" as='div' style={{ marginTop: 20 }}>API Key</Text>
                             <TextField.Root variant="surface" placeholder="Enter your cal.com API key" value={calendarApiKey} onChange={(e) => setCalendarApiKey(e.target.value)} />
 
@@ -282,18 +283,12 @@ export default function NewReceptionist({ onInitReceptionist }) {
                                 </Button>
                             </Dialog.Close>
                         )}
-                        {step > 1 && (  
+                        {step > 1 && (
                             <Button variant="soft" color="gray" onClick={() => step > 1 ? setStep(step - 1) : null} disabled={step === 1}>
                                 Back
                             </Button>
                         )}
-                        {loading ? (
-                            <div></div>
-                        ) : (
-                            <Button variant="solid" onClick={() => step < 3 ? setStep(step + 1) : initReceptionist()}>
-                                {step === 3 ? 'Create Receptionist' : 'Next'}
-                            </Button>
-                        )}
+                        <Button variant="solid" onClick={() => step < 3 ? setStep(step + 1) : initReceptionist()} loading={creatingReceptionist}>{ step === 3 ? 'Create Receptionist' : 'Next' }</Button>
                     </Row>
                 </Dialog.Content>
             </Dialog.Root>

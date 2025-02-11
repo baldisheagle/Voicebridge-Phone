@@ -87,7 +87,7 @@ export default function Dashboard() {
     });
   }
 
-  const testAPI = () => {
+  const testAuthorizationAPI = () => {
     fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/isAuthorized', {
       method: 'GET',
       headers: {
@@ -102,6 +102,17 @@ export default function Dashboard() {
       }
     }).catch((error) => {
       console.error(error);
+    });
+  }
+
+  const testAvailabilityAPI = () => {
+    fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/checkAvailabilityTest', {
+      method: 'POST',
+      body: JSON.stringify({ time_requested: 'tomorrow at 10am', timezone: 'America/New_York' })
+    }).then((response) => {
+      response.json().then((data) => {
+        console.log(data);
+      });
     });
   }
 
@@ -120,7 +131,8 @@ export default function Dashboard() {
 
       <Heading size='4'>Dashboard</Heading>
 
-      {/* <Button variant="outline" onClick={() => testAPI()}>Test</Button> */}
+      {/* <Button variant="outline" onClick={() => testAuthorizationAPI()}>Test authorization</Button> */}
+      {/* <Button variant="outline" onClick={() => testAvailabilityAPI()}>Test availability</Button> */}
 
       <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 

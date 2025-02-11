@@ -8,9 +8,11 @@ import Logo from './components/common/Logo.js';
 import Footer from './components/common/Footer.js';
 import { useMediaQuery } from './helpers/dom.js';
 import Profile from './components/common/Profile.js';
-import { dbUpdateWorkspace } from './utilities/database.js';
+import { dbCreateAgent, dbUpdateWorkspace } from './utilities/database.js';
 import { firecrawl } from './utilities/firecrawl.js';
 import { validateUrl } from './helpers/string.js';
+import { VAPI_AGENT_DEFAULTS } from './config/defaults.js';
+import { createVapiAssistant } from './utilities/vapi.js';
 export default function Onboarding() {
 
   const auth = useRequireAuth();
@@ -41,6 +43,7 @@ export default function Onboarding() {
     setBusinessName(auth.workspace.name ? auth.workspace.name : 'My business');
     if (auth.workspace.onboarded) {
       navigate('/dashboard');
+      setLoading(false);
     } else {
       setLoading(false);
     }
@@ -70,7 +73,9 @@ export default function Onboarding() {
   }
 
   const completeOnboarding = async () => {
+    
     setLoading(true);
+    
     // Save business info to workspace, set onboarding to true
     let _businessInfo = {
       website: businessWebsite,
@@ -81,6 +86,8 @@ export default function Onboarding() {
       services: businessServices,
       insurance: businessInsurance
     }
+  
+    // Update workspace in database
     await dbUpdateWorkspace(auth.workspace.id, {
       ...auth.workspace,
       name: businessName || 'My business', 
@@ -95,6 +102,56 @@ export default function Onboarding() {
       businessInfo: _businessInfo,
       onboarded: true
     });
+
+    // TODO: Create a receptionist
+    
+    // Build agent object
+    // let agentId = uuidv4();
+    // let _agent = {
+    //   id: agentId,
+    //   vapiAssistantId: null,
+    //   template: 'phone-receptionist',
+    //   name: VAPI_AGENT_DEFAULTS.name,
+    //   agentName: agentId,
+    //   voiceId: VAPI_AGENT_DEFAULTS.voiceId,
+    //   language: VAPI_AGENT_DEFAULTS.language,
+    //   model: VAPI_AGENT_DEFAULTS.model,
+    //   includeDisclaimer: VAPI_AGENT_DEFAULTS.includeDisclaimer,
+    //   businessInfo: _businessInfo,
+    //   ambientSound: VAPI_AGENT_DEFAULTS.ambientSound,
+    //   boostedKeywords: VAPI_AGENT_DEFAULTS.boostedKeywords,
+    //   calendar: VAPI_AGENT_DEFAULTS.calendar,
+    //   calCom: VAPI_AGENT_DEFAULTS.calCom,
+    //   faq: [],
+    //   phoneNumber: null,
+    //   workspaceId: auth.workspace.id,
+    //   createdBy: auth.user.uid,
+    //   createdAt: new Date().toISOString(),
+    //   updatedAt: new Date().toISOString(),
+    // }
+
+    // // Create Vapi Assistant using agent object
+    // let vapiAssistantId = await createVapiAssistant(_agent);
+
+    // // Update agent with Vapi Assistant ID and create agent in database
+    // if (vapiAssistantId) {
+
+    //     // Update agent with Vapi Assistant ID
+    //     _agent.vapiAssistantId = vapiAssistantId;
+
+    //     // Create agent in database
+    //     let res = await dbCreateAgent(_agent);
+
+    //     if (res) {
+
+    //       // Buy a phone number
+
+
+    //     }
+
+    // }
+
+    // TODO: Buy a phone number with 
 
     // Pause for 5 seconds
     await new Promise(resolve => setTimeout(resolve, 5000));

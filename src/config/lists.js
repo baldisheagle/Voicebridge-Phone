@@ -1,7 +1,7 @@
 
 export const VOICES = [
-    { value: "sarah", label: "American Female" },
-    { value: "29vD33N1CtxCmqQRPOHJ", label: "American Male" },
+    { value: "56AoDkrOh6qfVPDXZ7Pt", label: "Female (US)" },
+    { value: "UgBBYS2sOqTuMpoF3BR0", label: "Male (US)" },
     // { value: "11labs-Myra", label: "American Female" },
     // { value: "11labs-Adrian", label: "American Male" },
 ];
