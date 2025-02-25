@@ -20,9 +20,11 @@ import NotFound from "./NotFound.js";
 import Dashboard from "./Dashboard.js";
 import Settings from './Settings.js';
 import Calls from './Calls.js';
-import Receptionist from './ReceptionistSingle.js';
+import Receptionist from './Receptionist.js';
+import Agents from './Agents.js';
 import PhoneNumbers from './PhoneNumbers.js';
 import Onboarding from './Onboarding.js';
+import Integrations from './Integrations.js';
 import UserProfile from './Profile.js';
 import Profile from './components/common/Profile.js';
 import SidebarComponent from './components/common/Sidebar.js';
@@ -48,8 +50,10 @@ export default function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calls" element={<Calls />} />
                   <Route path="/receptionist" element={<Receptionist />} />
+                  {/* <Route path="/agents" element={<Agents />} /> */}
                   <Route path="/phone-numbers" element={<PhoneNumbers />} />
                   <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/integrations" element={<Integrations />} />
                   <Route path="/profile" element={<UserProfile />} />
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />

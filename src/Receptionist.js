@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from './use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
-import { Heading, Spinner, TabNav, Button, Text } from '@radix-ui/themes';
+import { Heading, Spinner, TabNav, Button, Text, Separator } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
 import BusinessInfo from './components/receptionist/BusinessInfo.js';
 import General from './components/receptionist/General.js';
@@ -69,71 +69,38 @@ export default function Receptionist() {
         </Row>
       )}
 
-      {receptionist && (
-        <div style={{ width: '100%', marginTop: 10 }}>
-          <TabNav.Root>
-            <TabNav.Link href="#" active={activeTab === 'general'} onClick={() => setActiveTab('general')}>
-              General
-            </TabNav.Link>
-
-            <TabNav.Link href="#" active={activeTab === 'businessInfo'} onClick={() => setActiveTab('businessInfo')}>
-              Business Info
-            </TabNav.Link>
-
-            <TabNav.Link href="#" active={activeTab === 'faq'} onClick={() => setActiveTab('faq')}>
-              FAQ
-            </TabNav.Link>
-
-            <TabNav.Link href="#" active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')}>
-              Calendar
-            </TabNav.Link>
-
-            <TabNav.Link href="#" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')}>
-              Notifications
-            </TabNav.Link>
-
-            {/* <TabNav.Link href="#" active={activeTab === 'questions'} onClick={() => setActiveTab('questions')}>
-              Questions
-            </TabNav.Link> */}
-
-            {/* <TabNav.Link href="#" active={activeTab === 'skills'} onClick={() => setActiveTab('skills')}>
-              Skills
-            </TabNav.Link> */}
-
-            <TabNav.Link href="#" active={activeTab === 'admin'} onClick={() => setActiveTab('admin')}>
-              Admin
-            </TabNav.Link>
-
-          </TabNav.Root>
-        </div>
-      )}
-
       {receptionist && (  
         <div style={{ position: 'relative', top: 0, width: '100%', paddingRight: 10, paddingBottom: 100, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
-        {activeTab === 'general' && (    
+          <Heading size='3' as='div' style={{ marginTop: 10, color: 'var(--gray-11)' }}>Phone & Voice</Heading>
+          <Separator style={{ width: '100%' }} />
+
           <General agent={receptionist} />
-        )}
 
-        {activeTab === 'businessInfo' && (
+          <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Business Info</Heading>
+          <Separator style={{ width: '100%' }} />
+
           <BusinessInfo agent={receptionist} />
-        )}
 
-        {activeTab === 'calendar' && (
-          <Calendar agent={receptionist} />
-        )}
+          <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Frequently Asked Questions</Heading>
+          <Separator style={{ width: '100%' }} />
 
-        {activeTab === 'faq' && (
           <FAQ agent={receptionist} />
-        )}
 
-        {activeTab === 'notifications' && (
+          <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Calendar</Heading>
+          <Separator style={{ width: '100%' }} />
+
+          <Calendar agent={receptionist} />
+
+          <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Notifications</Heading>
+          <Separator style={{ width: '100%' }} />
+
           <Notifications agent={receptionist} />
-        )}
 
-        {activeTab === 'admin' && (
+          <Heading size='3' as='div' style={{ marginTop: 40, color: 'var(--gray-11)' }}>Danger Zone</Heading>
+          <Separator style={{ width: '100%' }} />
+
           <Admin agent={receptionist} onDeleteReceptionist={onDeleteReceptionist} />
-        )}
 
         </div>
       )}

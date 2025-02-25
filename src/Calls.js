@@ -8,7 +8,7 @@ import { CaretUp, CaretDown, ArrowDownRight, ArrowUpRight, Trash } from '@phosph
 import { dbDeleteCall, dbGetCalls } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
 import { CALL_PURPOSES } from './config/lists.js';  
-import { SAMPLE_CALLS } from './config/demo.js';
+// import { SAMPLE_CALLS } from './config/demo.js';
 
 export default function Calls() {
 
@@ -32,7 +32,7 @@ export default function Calls() {
     // Get calls
     const calls = await dbGetCalls(auth.workspace.id);
     if (calls) {
-      setCalls(calls.sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
+      setCalls(calls.filter(call => !call.deleted).sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
       // setCalls(SAMPLE_CALLS);
     }
 

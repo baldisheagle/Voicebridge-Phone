@@ -201,8 +201,10 @@ export const dbDeleteCall = async(workspaceId, callId) => {
     if (snapshot.empty) {
       return false;
     }
+    // const docRef = doc(db, snapshot.docs[0].ref.path);
+    // await deleteDoc(docRef); --- do not delete the call, just mark it as deleted
     const docRef = doc(db, snapshot.docs[0].ref.path);
-    await deleteDoc(docRef);
+    await setDoc(docRef, { deleted: true, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
   } catch (error) {
     // console.error("Error deleting call:", error);

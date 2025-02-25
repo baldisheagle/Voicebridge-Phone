@@ -140,7 +140,7 @@ export default function SidebarComponent(props) {
               {/* <MenuItem 
                 label="Agents"
                 active={location.pathname === '/agents' ? true : false} 
-                icon={<UsersFour size={15} weight="bold" />}
+                icon={<SquaresFour size={15} weight="bold" />}
                 rootStyles={{
                   ['.' + menuClasses.button]: {
                     marginBottom: '0px',
@@ -174,7 +174,7 @@ export default function SidebarComponent(props) {
               </MenuItem>
 
 
-              {/* <MenuItem 
+              <MenuItem 
                 label="Integrations"
                 active={location.pathname === '/integrations' ? true : false} 
                 icon={<SquaresFour size={15} weight="bold" />}
@@ -184,7 +184,7 @@ export default function SidebarComponent(props) {
                   },
                 }}
                 onClick={() => navigate("/integrations")}>Integrations
-              </MenuItem> */}
+              </MenuItem>
 
               <MenuItem 
                 label="Settings"

@@ -22,10 +22,13 @@ export default function Calendar({ agent }) {
 
   // Initialize
   const initialize = async () => {
+    // TODO: Get calendar integrations
     setLoading(false);
   }
 
   // Save cal
+  // TODO: If no cal is selected, set calendar to null and update agent with message-taking prompt
+  // TODO: If cal is selected, set calendar to cal and update agent with appointment-scheduling prompt
   const saveCal = async () => {
     setCalUpdating(true);
     let _agent = {

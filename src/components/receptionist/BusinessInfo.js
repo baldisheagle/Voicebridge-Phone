@@ -209,7 +209,7 @@ export default function BusinessInfo({ agent }) {
       </Row>
 
       {/* Insurance accepted */}
-      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+      {/* <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
         <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
           <Text size="2" weight="bold">Insurance accepted</Text>
           <Text size="1" as='div' color='gray'>The insurance accepted by your business.</Text>
@@ -217,7 +217,7 @@ export default function BusinessInfo({ agent }) {
         <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
           <TextArea variant="surface" rows={3} maxLength={1000} value={insuranceAccepted} onChange={(e) => setInsuranceAccepted(e.target.value)} />
         </Col>
-      </Row>
+      </Row> */}
 
       {/* Business hours */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>

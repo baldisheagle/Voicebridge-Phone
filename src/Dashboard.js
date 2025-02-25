@@ -5,9 +5,9 @@ import { numberWithCommas, useMediaQuery } from './shared-functions.js';
 import { Col, Row } from 'react-bootstrap';
 import { ThemeContext } from "./Theme.js";
 import { Heading, Spinner, Text, Card, Table, IconButton, Badge, ScrollArea, AlertDialog, Button, Link, Callout } from '@radix-ui/themes';
-import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight, Check, Checks, Phone, UserCircleGear } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, ArrowDownRight, ArrowUpRight, Trash, ArrowRight, Phone, UserCircleGear } from '@phosphor-icons/react';
 import toast, { Toaster } from 'react-hot-toast';
-import { dbCreateAgent, dbDeleteCall, dbGetAgents, dbGetCalls, dbGetPhoneNumbers } from './utilities/database.js';
+import { dbDeleteCall, dbGetAgents, dbGetCalls, dbGetPhoneNumbers } from './utilities/database.js';
 import { formatPhoneNumber } from './helpers/string.js';
 import { CALL_PURPOSES } from './config/lists.js';
 import Moment from 'react-moment';
@@ -41,7 +41,7 @@ export default function Dashboard() {
     
     const calls = await dbGetCalls(auth.workspace.id);
     if (calls) {
-      setCalls(calls.sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
+      setCalls(calls.filter(call => !call.deleted).sort((a, b) => new Date(b.startTimestamp) - new Date(a.startTimestamp)));
       setTotalCalls(calls.length);
       let _totalTime = 0;
       calls.forEach(call => {
@@ -116,6 +116,24 @@ export default function Dashboard() {
     });
   }
 
+  const sendSMS = async () => {
+
+    let res = await fetch('http://127.0.0.1:5001/voicebridge-app/us-central1/sendSMS', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        phoneNumber: '+16503364294',
+        message: 'Hello, this is a test message' 
+      })
+    });
+
+    let resJson = await res.json();
+    console.log(resJson);
+
+  }
+
   if (!auth || !auth.user || !auth.workspace || loading) {
     return (
       <div style={{ width: '100%', minHeight: '100vh' }}>
@@ -133,7 +151,8 @@ export default function Dashboard() {
 
       {/* <Button variant="outline" onClick={() => testAuthorizationAPI()}>Test authorization</Button> */}
       {/* <Button variant="outline" onClick={() => testAvailabilityAPI()}>Test availability</Button> */}
-
+      {/* <Button variant="outline" onClick={() => sendSMS()}>Send SMS</Button> */}
+      
       <div style={{ position: 'relative', top: 10, width: '100%', paddingRight: 10, overflow: 'auto', height: 'calc(100vh - 40px)', paddingBottom: 100 }}>
 
         {/* Onboarding steps */}

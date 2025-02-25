@@ -33,17 +33,25 @@ export const AMBIENT_SOUNDS = [
     // { value: 'call-center', label: 'Call Center' },
 ];
 
+export const EVENT_TERMS = [
+    { value: 'appointment', label: 'Appointment' },
+    { value: 'booking', label: 'Booking' },
+    { value: 'meeting', label: 'Meeting' },
+    { value: 'consultation', label: 'Consultation' },
+    { value: 'session', label: 'Session' },
+    { value: 'visit', label: 'Visit' },
+    { value: 'reservation', label: 'Reservation' },
+    { value: 'slot', label: 'Time Slot' },
+    { value: 'demo', label: 'Demo' },
+    ];
+
 export const CALL_PURPOSES = [
-    { value: 'book appointment', label: 'Book Appointment' },
-    { value: 'cancel appointment', label: 'Cancel Appointment' },
-    { value: 'reschedule appointment', label: 'Reschedule Appointment' },
-    { value: 'billing question', label: 'Billing Question' },
-    { value: 'insurance question', label: 'Insurance Question' },
-    { value: 'lab results question', label: 'Lab Results Question' },
-    { value: 'prescription refill request', label: 'Prescription Refill Request' },
-    { value: 'request for medical records', label: 'Request for Medical Records' },
-    { value: 'other question', label: 'Other Question' },
+    { value: 'booking', label: 'Booking' },
+    { value: 'cancellation', label: 'Cancellation' },
+    { value: 'reschedule', label: 'Reschedule' },
+    { value: 'question', label: 'Question' },
     { value: 'feedback', label: 'Feedback' },
+    { value: 'other', label: 'Other' },
 ];
 
 

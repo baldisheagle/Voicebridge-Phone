@@ -82,8 +82,9 @@ export default function NewReceptionist({ onInitReceptionist }) {
             let _agent = {
                 id: agentId,
                 vapiAssistantId: null,
-                template: 'phone-receptionist',
-                name: agentName,
+                template: 'phone-receptionist-appointment-scheduling',
+                name: "Phone Receptionist",
+                templateId: 'phone-agent-appointment-scheduling',
                 agentName: agentName,
                 voiceId: voiceId,
                 language: language,

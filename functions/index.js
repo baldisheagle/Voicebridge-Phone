@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
-const { Retell } = require("retell-sdk");
+// const { Retell } = require("retell-sdk");
 const z = require('zod');
 const chrono = require('chrono-node');
+const twilio = require('twilio');
 
 // Firebase
 const { onRequest } = require("firebase-functions/v2/https");
@@ -470,7 +471,7 @@ exports.vapiWebhook = onRequest({
     null
 */
 
-  async function saveVapiCallToDatabase(message) {
+async function saveVapiCallToDatabase(message) {
 
   console.log('Saving Vapi call to database', message);
 
@@ -514,6 +515,7 @@ exports.vapiWebhook = onRequest({
     transcript: message.transcript ? message.transcript : null,
     recordingUrl: message.recordingUrl ? message.recordingUrl : null,
     disconnectReason: message.endedReason ? message.endedReason : null,
+    deleted: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -784,7 +786,6 @@ exports.vapiDeleteNumber = onRequest((req, res) => {
 
 exports.vapiLinkPhoneNumberToAssistant = onRequest((req, res) => {
 
-  
   corsMiddleware(req, res, async () => {
 
     if (req.body && req.body.assistantId && req.body.phoneNumberId) {
@@ -808,6 +809,58 @@ exports.vapiLinkPhoneNumberToAssistant = onRequest((req, res) => {
       } catch (error) {
         console.error('Error linking phone number to assistant', error);
         res.status(500).send(JSON.stringify({ error: "Error linking phone number to assistant" }));
+        return;
+      }
+
+    } else {
+      console.error('Missing parameters');
+      res.status(400).send(JSON.stringify({ error: "Missing parameters" }));
+      return;
+    }
+  });
+
+});
+
+/*
+  Function: Send SMS
+  Parameters:
+    phoneNumber
+    message
+  Return:
+    null
+*/
+
+exports.sendSMS = onRequest((req, res) => {
+
+  corsMiddleware(req, res, async () => {
+
+    console.log('Sending SMS', req.body);
+
+    if (req.body && req.body.phoneNumber && req.body.message) {
+
+      console.log('Sending SMS', req.body);
+
+      try {
+
+        // Create Twilio client
+        const client = new twilio(
+          process.env.REACT_APP_TWILIO_ACCOUNT_SID,
+          process.env.REACT_APP_TWILIO_AUTH_TOKEN
+        );
+
+        // Send message
+        const message = await client.messages.create({
+          body: req.body.message,
+          from: process.env.REACT_APP_TWILIO_PHONE_NUMBER,
+          to: req.body.phoneNumber
+        });
+
+        console.log('SMS sent', message.sid); 
+        res.status(200).send(JSON.stringify({ messageId: message.sid }));
+
+      } catch (error) {
+        console.error('Error sending SMS', error);
+        res.status(500).send(JSON.stringify({ error: "Error sending SMS" }));
         return;
       }
 

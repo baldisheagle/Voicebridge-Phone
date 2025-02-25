@@ -4,12 +4,13 @@ import { useRequireAuth } from '../../use-require-auth.js';
 import { Col, Row } from 'react-bootstrap';
 import { Select, Spinner, Text, TextField, Button, Link } from '@radix-ui/themes';
 import toast, { Toaster } from 'react-hot-toast';
-import { LANGUAGES, VOICES, AMBIENT_SOUNDS } from '../../config/lists.js';
+import { LANGUAGES, VOICES, AMBIENT_SOUNDS, EVENT_TERMS } from '../../config/lists.js';
 import { dbUpdateAgent, dbGetPhoneNumbers, dbGetAgents } from '../../utilities/database.js';
 import { formatPhoneNumber } from '../../helpers/string.js';
 import { linkPhoneNumberToAssistant, updateVapiAssistant } from '../../utilities/vapi.js';
+import { Copy } from '@phosphor-icons/react';
 
-export default function General({ agent, onDeleteReceptionist }) {
+export default function General({ agent }) {
 
   const auth = useRequireAuth();
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function General({ agent, onDeleteReceptionist }) {
   const [ambientSound, setAmbientSound] = useState(agent.ambientSound);
   const [boostedKeywords, setBoostedKeywords] = useState(agent.boostedKeywords);
   const [agentPhoneNumber, setAgentPhoneNumber] = useState(agent.phoneNumber);
+  const [eventTerm, setEventTerm] = useState(agent.eventTerm);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,10 +69,9 @@ export default function General({ agent, onDeleteReceptionist }) {
       includeDisclaimer: includeDisclaimer,
       ambientSound: ambientSound,
       boostedKeywords: boostedKeywords,
+      eventTerm: eventTerm,
       updatedAt: new Date().toISOString(),
     }
-
-    // console.log('Agent', _agent);
 
     try {
 
@@ -137,6 +138,9 @@ export default function General({ agent, onDeleteReceptionist }) {
               ))}
             </Select.Content>
           </Select.Root>
+          { agentPhoneNumber &&
+            <Text size="1" as='div' color='gray' style={{ cursor: 'pointer', marginTop: 5 }} onClick={() => {navigator.clipboard.writeText(phoneNumbers.find(p => p.id === agentPhoneNumber).number); toast.success('Phone number copied to clipboard')}}><Copy size={16} weight='regular' /> Copy to clipboard</Text>
+          }
         </Col>
       </Row>
 
@@ -227,9 +231,31 @@ export default function General({ agent, onDeleteReceptionist }) {
         </Col>
       </Row> */}
 
+      {/* Event term */}
+      <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 30 }}>
+        <Col xs={12} sm={12} md={6} lg={4} xl={3} style={{ padding: 0, paddingLeft: 10, paddingRight: 10, paddingBottom: 5 }}>
+          <Text size="2" weight="bold">Event term</Text>
+          <Text size="1" as='div' color='gray'>The term used to describe the event.</Text>
+        </Col>
+        <Col xs={12} sm={12} md={6} lg={5} xl={4} style={{ padding: 0, paddingLeft: 10 }}>
+          <Select.Root value={eventTerm} onValueChange={(value) => setEventTerm(value)}>
+            <Select.Trigger variant="surface" color="gray" placeholder="Select an event term" />
+            <Select.Content>
+              {EVENT_TERMS.map((option, index) => (
+                <Select.Item key={index} value={option.value}>{option.label}</Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>  
+        </Col>
+      </Row>
+
       {/* TODO: End call on silence timeout */}
 
       {/* TODO: Max duration of call */}
+
+      {/* TODO: Greeting */}
+
+      {/* TODO: Call reasons to collect */}
 
       {/* Save button */}
       <Row style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'flex-start', marginLeft: 0, marginRight: 0, marginTop: 40 }}>

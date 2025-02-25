@@ -36,6 +36,8 @@ export const createVapiAssistant = async (assistant) => {
 // Update Vapi assistant
 export const updateVapiAssistant = async (assistant) => {
 
+    // TODO: Choose template based on assistant.templateId
+
     // Replace variables in assistant
     let _assistant = replaceVariablesInTemplate(assistant);
 
@@ -182,10 +184,12 @@ const replaceVariablesInTemplate = (assistant) => {
     template.model.messages[0].content = template.model.messages[0].content.replaceAll('[[BUSINESS_NAME]]', assistant.businessInfo.name)
     template.model.messages[0].content = template.model.messages[0].content.replaceAll('[[BUSINESS_INFO]]', newBusinessInfo)
     template.model.messages[0].content = template.model.messages[0].content.replaceAll('[[FAQ]]', newFAQ);
+    template.model.messages[0].content = template.model.messages[0].content.replaceAll('[[EVENT_TERM]]', assistant.eventTerm);
 
     // First message
     template.firstMessage = template.firstMessage.replaceAll('[[AGENT_NAME]]', assistant.agentName).replaceAll('[[BUSINESS_NAME]]', assistant.businessInfo.name);
-
+    template.firstMessage = template.firstMessage.replaceAll('[[EVENT_TERM]]', assistant.eventTerm);
+    
     // Ambient sound
     template.backgroundSound = template.backgroundSound.replaceAll('[[AMBIENT_SOUND]]', assistant.ambientSound);
 
